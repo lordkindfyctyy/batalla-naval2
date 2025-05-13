@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="icon" href="royal-canin-logo.png" type="image/png">
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+        }
+        .product-card {
+            width: 300px; /* Tamaño más pequeño */
+            box-sizing: border-box;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEDIGREE</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+    <script>
+        function addToCartWithStockUpdate(productId, inputId) {
+            const stockElement = document.querySelector(`#${productId} .stock-count`);
+            const quantityInput = document.getElementById(inputId);
+            const quantity = parseInt(quantityInput.value, 10);
+            let stock = parseInt(stockElement.textContent, 10);
+
+            if (quantity > 0 && quantity <= stock) {
+                stock -= quantity;
+                stockElement.textContent = stock;
+                cartCount += quantity;
+                document.getElementById('cart-counter').textContent = `Carrito: ${cartCount}`;
+            } else {
+                alert('Cantidad no válida o sin stock suficiente.');
+            }
+        }
+    </script>
+        
+        header {
+            background: linear-gradient(to right, orange, green); /* Cambiar el fondo a un degradado de naranja a verde */
+            color: white; /* Cambiar el color del texto a blanco */
+            text-align: center;
+            padding: 10px;
+        }
+        h1 {
+            font-family: 'Arial Black', Gadget, sans-serif; /* Cambiar la fuente del h1 */
+        }
+        body {
+            font-weight: bold; /* Cambiar el formato de la letra a negrita */
+        }
+        .product-card img {
+            width: 200px; /* Tamaño uniforme */
+            height: 200px;
+            object-fit: contain; /* Ajustar las imágenes sin deformarlas */
+            border-radius: 10px; /* Bordes redondeados */
+            border: 2px solid #631515; /* Agregar borde a las imágenes */
+            margin: 10px auto; /* Centrar las imágenes */
+            display: block;
+        }
+        .product-card {
+            border: 2px solid #f1f0ed; /* Contorno en un color agradable */
+            border-radius: 10px; /* Bordes redondeados */
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para un efecto elegante */
+            transition: transform 0.2s, box-shadow 0.2s; /* Transición suave */
+        }
+        .product-card:hover {
+            transform: scale(1.05); /* Aumentar ligeramente el tamaño al pasar el mouse */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+        }
+        .buy-button {
+            background-color: #28a745; /* Botón de compra en verde */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .buy-button:hover {
+            background-color: #218838; /* Verde más oscuro al pasar el mouse */
+        }
+    </style>
+    <script>
+        let cartCount = 0;
+
+        function addToCart() {
+            cartCount++;
+            document.getElementById('cart-counter').textContent = `Carrito: ${cartCount}`;
+        }
+    </script>
+</head>
+<style>
+    body {
+        font-weight: bold; /* Cambiar el formato de la letra a negrita */
+        color: black; /* Eliminar el color verde y establecer el texto en negro */
+    }
+    .cart-counter {
+        position: fixed;
+        top: 10px;
+        right: 10px; /* Mover el carrito a la derecha */
+        background-color: #f8f9fa;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    header {
+        background: linear-gradient(to right, rgb(128, 27, 27), rgb(248, 247, 246)); /* Fondo degradado entre rojo y naranja */
+        color: white; /* Texto en blanco */
+        text-align: center;
+        padding: 10px;
+    }
+    .buy-button {
+        background-color: #00ff15; /* Botón de compra en un tono naranja rojizo */
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .buy-button:hover {
+        background-color: #68e600; /* Tono más oscuro al pasar el mouse */
+    }
+</style>
+<body>
+    <div id="cart-counter" class="cart-counter">Carrito: 0</div>
+    <header>
+        <h1>ROYAL CANIN</h1>
+    <img src="e6c49c148609243.Y3JvcCw5MjAsNzIwLDE4MCww.png" alt="Promoción Especial" style="width: 1500px; height: 400px; border-radius: 10px; margin-top: 10px;">
+    </header>
+    <div class="container">
+        <!-- Producto 11 -->
+       
+
+       
+    </div>
+    <main>
+        <header>
+            <h1>royal canin</h1>
+            
+        <div class="container">
+            <!-- Producto 1 -->
+            <div class="product-card"
+            <div class="discount" style="color: red;">10% OFF</div>
+            <img src="" alt="Royal Canin Mini Adult">
+            <h3 style="color: red;">Royal Canin Mini Adult</h3>
+            <div class="price" style="color: red;">
+            <span class="original-price">$120,000</span>
+            <span class="discounted-price">$108,000</span>
+            </div>
+            <button class="buy-button" style="background-color: red;">COMPRAR</button>
+            <div class="stock" style="color: red;">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            <div class="quantity">
+            <label for="quantity1">Cantidad:</label>
+            <input type="number" id="quantity1" name="quantity1" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart()" style="background-color: red;">Agregar al carrito</button>
+            </div>
+            </div>
+            <!-- Producto 4 -->
+            <div class="product-card">
+                <div class="discount">20% OFF</div>
+                <img src="r" alt="Producto 4">
+                <h3>Producto 4</h3>
+                <div class="price">
+                    <span class="original-price">$100,000</span>
+                    <span class="discounted-price">$80,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">50</span>
+                    <div class="quantity">
+                        <label for="quantity4">Cantidad:</label>
+                        <input type="number" id="quantity4" name="quantity4" min="1" max="50" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 5 -->
+            <div class="product-card">
+                <div class="discount">25% OFF</div>
+                <img src="product5.jpg" alt="Producto 5">
+                <h3>Producto 5</h3>
+                <div class="price">
+                    <span class="original-price">$200,000</span>
+                    <span class="discounted-price">$150,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">40</span>
+                    <div class="quantity">
+                        <label for="quantity5">Cantidad:</label>
+                        <input type="number" id="quantity5" name="quantity5" min="1" max="40" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 6 -->
+            <div class="product-card">
+                <div class="discount">10% OFF</div>
+                <img src="product6.jpg" alt="Producto 6">
+                <h3>Producto 6</h3>
+                <div class="price">
+                    <span class="original-price">$300,000</span>
+                    <span class="discounted-price">$270,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">30</span>
+                    <div class="quantity">
+                        <label for="quantity6">Cantidad:</label>
+                        <input type="number" id="quantity6" name="quantity6" min="1" max="30" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 7 -->
+            <div class="product-card">
+                <div class="discount">5% OFF</div>
+                <img src="product7.jpg" alt="Producto 7">
+                <h3>Producto 7</h3>
+                <div class="price">
+                    <span class="original-price">$400,000</span>
+                    <span class="discounted-price">$380,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">20</span>
+                    <div class="quantity">
+                        <label for="quantity7">Cantidad:</label>
+                        <input type="number" id="quantity7" name="quantity7" min="1" max="20" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 8 -->
+            <div class="product-card">
+                <div class="discount">30% OFF</div>
+                <img src="product8.jpg" alt="Producto 8">
+                <h3>Producto 8</h3>
+                <div class="price">
+                    <span class="original-price">$500,000</span>
+                    <span class="discounted-price">$350,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">15</span>
+                    <div class="quantity">
+                        <label for="quantity8">Cantidad:</label>
+                        <input type="number" id="quantity8" name="quantity8" min="1" max="15" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 9 -->
+            <div class="product-card">
+                <div class="discount">12% OFF</div>
+                <img src="product9.jpg" alt="Producto 9">
+                <h3>Producto 9</h3>
+                <div class="price">
+                    <span class="original-price">$600,000</span>
+                    <span class="discounted-price">$528,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">10</span>
+                    <div class="quantity">
+                        <label for="quantity9">Cantidad:</label>
+                        <input type="number" id="quantity9" name="quantity9" min="1" max="10" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 10 -->
+            <div class="product-card">
+                <div class="discount">18% OFF</div>
+                <img src="product10.jpg" alt="Producto 10">
+                <h3>Producto 10</h3>
+                <div class="price">
+                    <span class="original-price">$700,000</span>
+                    <span class="discounted-price">$574,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">5</span>
+                    <div class="quantity">
+                        <label for="quantity10">Cantidad:</label>
+                        <input type="number" id="quantity10" name="quantity10" min="1" max="5" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+            <!-- Producto 15 -->
+            <div class="product-card">
+                <div class="discount">20% OFF</div>
+                <img src="product15.jpg" alt="Producto 15">
+                <h3>Producto 15</h3>
+                <div class="price">
+                    <span class="original-price">$800,000</span>
+                    <span class="discounted-price">$640,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">8</span>
+                    <div class="quantity">
+                        <label for="quantity15">Cantidad:</label>
+                        <input type="number" id="quantity15" name="quantity15" min="1" max="8" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 16 -->
+            <div class="product-card">
+                <div class="discount">15% OFF</div>
+                <img src="product16.jpg" alt="Producto 16">
+                <h3>Producto 16</h3>
+                <div class="price">
+                    <span class="original-price">$900,000</span>
+                    <span class="discounted-price">$765,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">12</span>
+                    <div class="quantity">
+                        <label for="quantity16">Cantidad:</label>
+                        <input type="number" id="quantity16" name="quantity16" min="1" max="12" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 17 -->
+            <div class="product-card">
+                <div class="discount">10% OFF</div>
+                <img src="product17.jpg" alt="Producto 17">
+                <h3>Producto 17</h3>
+                <div class="price">
+                    <span class="original-price">$1,000,000</span>
+                    <span class="discounted-price">$900,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">6</span>
+                    <div class="quantity">
+                        <label for="quantity17">Cantidad:</label>
+                        <input type="number" id="quantity17" name="quantity17" min="1" max="6" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Producto 18 -->
+            <div class="product-card">
+                <div class="discount">25% OFF</div>
+                <img src="product18.jpg" alt="Producto 18">
+                <h3>Producto 18</h3>
+                <div class="price">
+                    <span class="original-price">$1,200,000</span>
+                    <span class="discounted-price">$900,000</span>
+                </div>
+                <button class="buy-button">COMPRAR</button>
+                <div class="stock">
+                    <span>Stock disponible: </span>
+                    <span class="stock-count">10</span>
+                    <div class="quantity">
+                        <label for="quantity18">Cantidad:</label>
+                        <input type="number" id="quantity18" name="quantity18" min="1" max="10" value="1">
+                    </div>
+                    <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                </div>
+            </div>
+
+            <!-- Add 10 more products similarly -->
+
+        <style>
+            body {
+                background-color: white; /* Cambiar el fondo a blanco */
+            }
+        </style>
+
+</body>
+</html>

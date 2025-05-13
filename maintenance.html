@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LO DE LALO PET SHOP</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        function searchProducts() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const products = document.querySelectorAll('.product');
+            products.forEach(product => {
+                const productName = product.querySelector('h4').textContent.toLowerCase();
+                if (productName.includes(query)) {
+                    product.style.display = 'block';
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        }
+
+        function updatePrice(productId) {
+            const selectElement = document.getElementById(`presentation${productId}`);
+            const priceElement = document.getElementById(`price${productId}`);
+            const selectedPrice = selectElement.value;
+            priceElement.textContent = `$${parseInt(selectedPrice).toLocaleString()}`;
+        }
+    </script>
+    <style>
+        body {
+            font-weight: bold; /* Cambiar el formato de la letra a negrita */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        
+            <div class="top-bar">
+                <span>TENEMOS 10% DE DESCUENTO EN TU SEGUNDA UNIDAD</span>
+            </div>
+            <div class="brand-banner">
+                <div class="slideshow-container">
+                    <div class="mySlides fade">
+                        <img src="banner gato maintenace.png" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="BANER LO DE LALO PET SHOP.png" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="banner alimentos perros y gatos 2.jpg" style="width:100%">
+                    </div>
+                </div>
+                <br>
+                <div style="text-align:center">
+                    <span class="dot" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                    <span class="dot" onclick="currentSlide(3)"></span>
+                </div>
+            </div>
+            <script>
+                let slideIndex = 0;
+                showSlides();
+
+                function showSlides() {
+                    const slides = document.getElementsByClassName("mySlides");
+                    const dots = document.getElementsByClassName("dot");
+                    for (let i = 0; i < slides.length; i++) {
+                        slides[i].style.display = "none";
+                    }
+                    slideIndex++;
+                    if (slideIndex > slides.length) { slideIndex = 1 }
+                    for (let i = 0; i < dots.length; i++) {
+                        dots[i].className = dots[i].className.replace(" active", "");
+                    }
+                    slides[slideIndex - 1].style.display = "block";
+                    dots[slideIndex - 1].className += " active";
+                    setTimeout(showSlides, 4000); // Change image every 3 seconds
+                }
+
+                function currentSlide(n) {
+                    slideIndex = n - 1;
+                    showSlides();
+                }
+            </script>
+            <style>
+                .slideshow-container {
+                    position: relative;
+                    max-width: 100%;
+                    margin: auto;
+                }
+                .mySlides {
+                    display: none;
+                }
+                .fade {
+                    animation: fade 3s;
+                }
+                @keyframes fade {
+                    from { opacity: .4 }
+                    to { opacity: 1 }
+                }
+                .dot {
+                    height: 15px;
+                    width: 15px;
+                    margin: 0 2px;
+                    background-color: #bbb;
+                    border-radius: 50%;
+                    display: inline-block;
+                    transition: background-color 0.6s ease;
+                    cursor: pointer;
+                }
+                .dot.active {
+                    background-color: #717171;
+                }
+            </style>
+        
+        <div class="options">
+            <div class="option">ENVÍO GRATIS <br> En el día comprando antes de las 12hs</div>
+            <div class="option">MEJOR PRECIO <br> Encuentra el mejor precio del mercado</div>
+            <div class="option">MEDIOS DE PAGO <br> Con Mercado Pago, compras seguras</div>
+            <div class="option">RETIRO EN TIENDA <br> Beneficios y regalos exclusivos</div>
+        </div>
+
+        <footer>
+            <style>
+                .whatsapp-button img {
+                    width: 50px; /* Ajustar el ancho del icono */
+                    height: 30px; /* Ajustar la altura del icono */
+                }
+            </style>
+            
+            <a href="https://wa.me/+541164722908?text=¡Hola!%20Quiero%20más%20información" target="_blank" class="whatsapp-button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" width="10" height="10">
+            </a>
+            <style>
+                .google-maps-logo img {
+                    width: 130px; /* Ajustar el ancho del logo */
+                    height: 130px; /* Ajustar la altura del logo */
+                }
+            </style>
+            <a href="https://www.google.com/maps/place/Lo+de+Lalo+PetShop/@-34.4384335,-58.5618485,17z/data=!3m1!4b1!4m6!3m5!1s0x95bca57cb1f2c315:0x3087ee7e5ed16880!8m2!3d-34.438438!4d-58.5592736!16s%2Fg%2F11gf608q9g?entry=ttu&g_ep=EgoyMDI1MDQxNC4xIKXMDSoASAFQAw%3D%3D" target="_blank" class="google-maps-logo">
+                <img src="http://www.logoeps.net/wp-content/uploads/2016/08/Google-Maps-logo.jpg" alt="Ubicación">
+                <img src="foto local del lado de afuera.png" alt="Foto del local por fuera" style="width: 200px; height: auto; margin-top: 10px;">
+            </a>
+        </footer>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Pet Food Brands</title>
+            <link rel="stylesheet" href="styles.css">
+        </head>
+        <body>
+            <div class="container">
+                <!-- Row 1 -->
+                <div class="logo">
+                    <a href="eukanuba.html">
+                        <img src="eukanuba logo.png" alt="Eukanuba Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="iams.html">
+                        <img src="IAMS.png" alt="IAMS Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="pedigree.html">
+                        <img src="pedigre relleno.jpg" alt="Pedigree Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="ROYALCANIN1.html">
+                        <img src="royal canin.webp" alt="Whiskas Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="old-prince.html">
+                        <img src="logo-old-prince.png" alt="Old Prince Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="maintenance.html">
+                        <img src="maintenance.png" alt="Maintenance Criadores Logo">
+                    </a>
+                </div>
+        
+                <!-- Row 2 -->
+                <div class="logo">
+                    <a href="monami.html">
+                    <img src="mon ami.jpg" alt="monmi Logo">
+                    </a>
+                </div>
+                <div class="logo">
+                    <a href="proplan.html">
+                    <img src="purina-proplan-logo-png_seeklogo-113931.png" alt="Purina Pro Plan Logo">
+                </a>
+                </div>
+                <div class="logo">
+                    <a href="excellent.html">
+                    <img src="excellent_horizontal_logo.webp" alt="Excellent Logo">
+                </a>
+                </div>
+                <div class="logo">
+                    <a href="dogchow.html">
+                    <img src="dog chow.jpg" alt="Dog Chow Logo">
+                </a>
+                </div>
+        
+                <!-- Row 3 -->
+                <div class="logo">
+                    <a href="performance.html">
+                    <img src="performan logo.jpg" alt="Royal Canin Logo">
+                </a>
+                </div>
+                <div class="logo">
+                    <a href="sieger.html">
+                    <img src="sieger.png" alt="Sieger Logo">
+                </a>
+                </div>
+                <div class="logo">
+                    <a href="unik.html">
+                    <img src="unik.jpg" alt="Unik Logo">
+                </a>
+                </div>
+                <div class="logo">
+                    <img src="vital kcan.jpg" alt="Vital Can Logo">
+                </div>
+                <div class="logo">
+                    <img src="dog selection.png" alt="Dog Selection Logo">
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MAINTENANCE</title>
+            <link rel="stylesheet" href="styles.css">
+            <style>
+                h1 {
+                    font-family: 'Arial Black', Gadget, sans-serif; /* Cambiar la fuente del h1 */
+                }
+                .description {
+                    text-align: center;
+                    font-size: 1.2em;
+                    color: #555;
+                    margin-bottom: 20px;
+                }
+                .product-card img {
+                    width: 200px; /* Tamaño uniforme */
+                    height: 200px;
+                    object-fit: contain; /* Ajustar las imágenes sin deformarlas */
+                    border-radius: 10px; /* Bordes redondeados */
+                    border: 2px solid #ddd; /* Agregar borde a las imágenes */
+                    margin: 10px auto; /* Centrar las imágenes */
+                    display: block;
+                }
+                body {
+                    font-weight: bold; /* Cambiar el formato de la letra a negrita */
+                }
+                .buy-button {
+                    background-color: #28a745; /* Botón de compra en verde */
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    text-align: center;
+                    text-decoration: none;
+                    display: inline-block;
+                    font-size: 16px;
+                    margin: 4px 2px;
+                    cursor: pointer;
+                    border-radius: 5px;
+                }
+                .buy-button:hover {
+                    background-color: #218838; /* Verde más oscuro al pasar el mouse */
+                }
+                .stock {
+                    margin-top: 10px;
+                    font-size: 14px;
+                    color: #555;
+                }
+                .quantity {
+                    margin-top: 5px;
+                }
+                .add-to-cart-button {
+                    background-color: #007bff;
+                    color: white;
+                    border: none;
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    border-radius: 5px;
+                    margin-top: 5px;
+                }
+                .add-to-cart-button:hover {
+                    background-color: #0056b3;
+                }
+            </style>
+            <script>
+                let cartCount = 0;
+        
+                function addToCart() {
+                    cartCount++;
+                    document.getElementById('cart-counter').textContent = `Carrito: ${cartCount}`;
+                }
+            </script>
+        </head>
+        <body>
+            <div id="cart-counter" class="cart-counter">Carrito: 0</div>
+            <header>
+                <h1>MAINTENANCE</h1>
+            </header>
+            <main>
+                <p class="description">Descubre la mejor nutrición para tus mascotas con MAINTENANCE. Productos diseñados para cada etapa de la vida.</p>
+                <p>Bienvenido a la página de MAINTENANCE. Aquí encontrarás información sobre sus productos.</p>
+                <div class="product-grid">
+                    <!-- Producto 1 -->
+                    <div class="product-card">
+                        <div class="discount-tag">10% OFF</div>
+                        <img src="maintenace cachorros.webp" alt="IAMS Adulto Medium">
+                        <h3>maintenance cachorro 15kgs</h3>
+                        <div class="size-options">
+                            
+                            <button>15kgs</button>
+                        </div>
+                        <div class="price">
+                            
+                            <span class="discounted-price">$22,500</span>
+                        </div>
+                        <div class="shipping">Envío gratis * hoy</div>
+                        <button class="buy-button">COMPRAR</button>
+                        <div class="stock">
+                            <span>Stock disponible: </span>
+                            <span class="stock-count">20</span>
+                            <div class="quantity">
+                                <label for="quantity1">Cantidad:</label>
+                                <input type="number" id="quantity1" name="quantity1" min="1" max="20" value="1">
+                            </div>
+                            <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                        </div>
+                    </div>
+        
+                    <!-- Producto 2 -->
+                    <div class="product-card">
+                        <div class="discount-tag">15% OFF</div>
+                        <img src="maintenance 22kgs.webp" alt="IAMS Puppy">
+                        <h3>maintenance adulto 22kgs</h3>
+                        <div class="size-options">
+                            
+                            <button>22kgs</button>
+                        </div>
+                        <div class="price">
+                            
+                            <span class="discounted-price">$35,000</span>
+                        </div>
+                        <div class="shipping">Envío gratis * hoy</div>
+                        <button class="buy-button">COMPRAR</button>
+                        <div class="stock">
+                            <span>Stock disponible: </span>
+                            <span class="stock-count">15</span>
+                            <div class="quantity">
+                                <label for="quantity2">Cantidad:</label>
+                                <input type="number" id="quantity2" name="quantity2" min="1" max="15" value="1">
+                            </div>
+                            <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                        </div>
+                    </div>
+        
+                    <!-- Producto 4: Gato Adulto -->
+                    <div class="product-card">
+                        <div class="discount-tag">8% OFF</div>
+                        <img src="MAINTENANCE CORDERO 15KGS.webp" alt="IAMS Gato Adulto">
+                        <h3>MAINTENANCE CORDERO 15KGS</h3>
+                        <div class="size-options">
+                            <button>15kgs</button>
+                            
+                        </div>
+                        <div class="price">
+                            
+                            <span class="discounted-price">$37,800</span>
+                        </div>
+                        <div class="shipping">Envío gratis * hoy</div>
+                        <button class="buy-button">COMPRAR</button>
+                        <div class="stock">
+                            <span>Stock disponible: </span>
+                            <span class="stock-count">10</span>
+                            <div class="quantity">
+                                <label for="quantity3">Cantidad:</label>
+                                <input type="number" id="quantity3" name="quantity3" min="1" max="10" value="1">
+                            </div>
+                            <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                        </div>
+                    </div>
+        
+                    <!-- Producto 5: Gato Kitten -->
+                    <div class="product-card">
+                        <div class="discount-tag">10% OFF</div>
+                        <img src="MAINTENANCE GATO ADULTO 15KGS.webp" alt="IAMS Gato Kitten">
+                        <h3>MAINTENACE GATO ADULTO 15KGS</h3>
+                        <div class="size-options">
+                            <button>15KGS</button>
+                        </div>
+                        <div class="price">
+                         
+                            <span class="discounted-price">$30,600</span>
+                        </div>
+                        <div class="shipping">Envío gratis * hoy</div>
+                        <button class="buy-button">COMPRAR</button>
+                        <div class="stock">
+                            <span>Stock disponible: </span>
+                            <span class="stock-count">5</span>
+                            <div class="quantity">
+                                <label for="quantity4">Cantidad:</label>
+                                <input type="number" id="quantity4" name="quantity4" min="1" max="5" value="1">
+                            </div>
+                            <button class="add-to-cart-button" onclick="addToCart()">Agregar al carrito</button>
+                        </div>
+                        <style>
+                            .product-card {
+                                border: 2px solid #f0c14b; /* Contorno en un color agradable */
+                                border-radius: 10px; /* Bordes redondeados */
+                                padding: 15px;
+                                margin: 10px;
+                                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para un efecto elegante */
+                                transition: transform 0.2s, box-shadow 0.2s; /* Transición suave */
+                            }
+                            .product-card:hover {
+                                transform: scale(1.05); /* Aumentar ligeramente el tamaño al pasar el mouse */
+                                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+                            }
+                        </style>
+                    
+                </div>
+            </main>
+        </body>
+        </html>
+        

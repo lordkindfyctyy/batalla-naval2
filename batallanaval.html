@@ -1,0 +1,42 @@
+function playerAttack(row, col) {
+    if (enemyBoard[row][col] === 'hit' || enemyBoard[row][col] === 'miss') {
+        alert('¡Ya disparaste ahí! Elige otra posición.');
+        return;
+    }
+
+    if (enemyBoard[row][col] === 'ship') {
+        enemyBoard[row][col] = 'hit';
+        // Find the hit ship and increment its hits
+        for (const ship of enemyShips) {
+            const shipCoords = getShipCoords(ship); // Helper function to get ship coordinates
+            if (shipCoords.some(coord => coord.row === row && coord.col === col)) {
+                ship.hits++;
+                break;
+            }
+        }
+        document.getElementById('hit-sound').play();
+        document.getElementById('game-status').textContent = '¡Buen tiro, capitán! ¡Tocado! Sigue disparando.';
+    } else {
+        enemyBoard[row][col] = 'miss';
+        document.getElementById('miss-sound').play();
+        document.getElementById('game-status').textContent = '¡Agua! Turno del enemigo...';
+        currentTurn = gameMode === 'vs-machine' ? 'enemy' : 'player2';
+        if (gameMode === 'vs-machine') {
+            setTimeout(enemyAttack, 1000);
+        } else {
+            alert('Jugador 2: ¡Tu turno! Inicia sesión para disparar.');
+            logout();
+        }
+    }
+
+    drawBoards();
+    updateRemainingShips();
+    checkGameOver();
+}
+
+// Helper function to get ship coordinates (implement based on how ships are placed)
+function getShipCoords(ship) {
+    // This requires tracking ship coordinates during placement
+    // Example: Store coords in ship object during placeShips
+    return ship.coords || [];
+}

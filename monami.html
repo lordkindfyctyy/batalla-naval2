@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LO DE LALO PET SHOP</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        function searchProducts() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const products = document.querySelectorAll('.product');
+            products.forEach(product => {
+                const productName = product.querySelector('h4').textContent.toLowerCase();
+                if (productName.includes(query)) {
+                    product.style.display = 'block';
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        }
+
+        function updatePrice(productId) {
+            const selectElement = document.getElementById(`presentation${productId}`);
+            const priceElement = document.getElementById(`price${productId}`);
+            const selectedPrice = selectElement.value;
+            priceElement.textContent = `$${parseInt(selectedPrice).toLocaleString()}`;
+        }
+    </script>
+    <style>
+        body {
+            font-weight: bold; /* Cambiar el formato de la letra a negrita */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        
+            <div class="top-bar">
+                <span>TENEMOS 10% DE DESCUENTO EN TU SEGUNDA UNIDAD</span>
+            </div>
+            <div class="brand-banner">
+                <div class="slideshow-container">
+                    <div class="mySlides fade">
+                        <img src="Banners-web-monami.jpg" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="BANER LO DE LALO PET SHOP.png" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="banner mon ami gatos.jpg" style="width:100%">
+                    </div>
+                </div>
+                <br>
+                <div style="text-align:center">
+                    <span class="dot" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                    <span class="dot" onclick="currentSlide(3)"></span>
+                </div>
+            </div>
+            <script>
+                let slideIndex = 0;
+                showSlides();
+
+                function showSlides() {
+                    const slides = document.getElementsByClassName("mySlides");
+                    const dots = document.getElementsByClassName("dot");
+                    for (let i = 0; i < slides.length; i++) {
+                        slides[i].style.display = "none";
+                    }
+                    slideIndex++;
+                    if (slideIndex > slides.length) { slideIndex = 1 }
+                    for (let i = 0; i < dots.length; i++) {
+                        dots[i].className = dots[i].className.replace(" active", "");
+                    }
+                    slides[slideIndex - 1].style.display = "block";
+                    dots[slideIndex - 1].className += " active";
+                    setTimeout(showSlides, 4000); // Change image every 3 seconds
+                }
+
+                function currentSlide(n) {
+                    slideIndex = n - 1;
+                    showSlides();
+                }
+            </script>
+            <style>
+                .slideshow-container {
+                    position: relative;
+                    max-width: 100%;
+                    margin: auto;
+                }
+                .mySlides {
+                    display: none;
+                }
+                .fade {
+                    animation: fade 3s;
+                }
+                @keyframes fade {
+                    from { opacity: .4 }
+                    to { opacity: 1 }
+                }
+                .dot {
+                    height: 15px;
+                    width: 15px;
+                    margin: 0 2px;
+                    background-color: #bbb;
+                    border-radius: 50%;
+                    display: inline-block;
+                    transition: background-color 0.6s ease;
+                    cursor: pointer;
+                }
+                .dot.active {
+                    background-color: #717171;
+                }
+            </style>
+        
+        <div class="options">
+            <div class="option">ENVÍO GRATIS <br> En el día comprando antes de las 12hs</div>
+            <div class="option">MEJOR PRECIO <br> Encuentra el mejor precio del mercado</div>
+            <div class="option">MEDIOS DE PAGO <br> Con Mercado Pago, compras seguras</div>
+            <div class="option">RETIRO EN TIENDA <br> Beneficios y regalos exclusivos</div>
+        </div>
+
+        <footer>
+            <style>
+                .whatsapp-button img {
+                    width: 50px; /* Ajustar el ancho del icono */
+                    height: 30px; /* Ajustar la altura del icono */
+                }
+            </style>
+            
+            <a href="https://wa.me/+541164722908?text=¡Hola!%20Quiero%20más%20información" target="_blank" class="whatsapp-button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" width="10" height="10">
+            </a>
+            <style>
+                .google-maps-logo img {
+                    width: 130px; /* Ajustar el ancho del logo */
+                    height: 130px; /* Ajustar la altura del logo */
+                }
+            </style>
+            <a href="https://www.google.com/maps/place/Lo+de+Lalo+PetShop/@-34.4384335,-58.5618485,17z/data=!3m1!4b1!4m6!3m5!1s0x95bca57cb1f2c315:0x3087ee7e5ed16880!8m2!3d-34.438438!4d-58.5592736!16s%2Fg%2F11gf608q9g?entry=ttu&g_ep=EgoyMDI1MDQxNC4xIKXMDSoASAFQAw%3D%3D" target="_blank" class="google-maps-logo">
+                <img src="http://www.logoeps.net/wp-content/uploads/2016/08/Google-Maps-logo.jpg" alt="Ubicación">
+                <img src="foto local del lado de afuera.png" alt="Foto del local por fuera" style="width: 200px; height: auto; margin-top: 10px;">
+            </a>
+        </footer>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Food Brands</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Row 1 -->
+        <div class="logo">
+            <a href="eukanuba.html">
+                <img src="eukanuba logo.png" alt="Eukanuba Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="iams.html">
+                <img src="IAMS.png" alt="IAMS Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="pedigree.html">
+                <img src="pedigre relleno.jpg" alt="Pedigree Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="ROYALCANIN1.html">
+                <img src="royal canin.webp" alt="Whiskas Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="old-prince.html">
+                <img src="logo-old-prince.png" alt="Old Prince Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="maintenance.html">
+                <img src="maintenance.png" alt="Maintenance Criadores Logo">
+            </a>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="logo">
+            <a href="monami.html">
+            <img src="mon ami.jpg" alt="monmi Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="proplan.html">
+            <img src="purina-proplan-logo-png_seeklogo-113931.png" alt="Purina Pro Plan Logo">
+        </a>
+        </div>
+        <div class="logo">
+            <a href="excellent.html">
+            <img src="excellent_horizontal_logo.webp" alt="Excellent Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="dogchow.html">
+            <img src="dog chow.jpg" alt="Dog Chow Logo">
+            </a>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="logo">
+            <a href="performance.html">
+            <img src="performan logo.jpg" alt="Royal Canin Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="sieger.html">
+            <img src="sieger.png" alt="Sieger Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="unik.html">
+            <img src="unik.jpg" alt="Unik Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="vitalcan.html">
+            <img src="vital kcan.jpg" alt="Vital Can Logo">
+        </a>
+        </div>
+        <div class="logo">
+            <a href="dogselection.html">
+            <img src="dog selection.png" alt="Dog Selection Logo">
+            </a>
+        </div>
+    </div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="icon" href="royal-canin-logo.png" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Ami</title>
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 30px;
+            padding: 30px; /* Espacio adicional alrededor del contenedor */
+        }
+        .product-card {
+            width: 300px; /* Tamaño uniforme para todas las tarjetas */
+            box-sizing: border-box;
+            border: 2px solid #f33607;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; /* Usar flex para alinear contenido verticalmente */
+            flex-direction: column; /* Apilar elementos verticalmente */
+            align-items: center; /* Centrar horizontalmente */
+            height: 560px; /* Altura fija para uniformidad */
+        }
+        .product-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .product-card img {
+            width: 200px; /* Tamaño uniforme para todas las imágenes */
+            height: 200px;
+            object-fit: contain; /* Mantener proporciones sin deformar */
+            border-radius: 10px;
+            border: 2px solid #631515;
+            margin: 10px 0; /* Margen solo arriba y abajo */
+        }
+        header {
+            background: linear-gradient(to right, rgb(128, 27, 27), rgb(248, 247, 246));
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        h1 {
+            font-family: 'Arial Black', Gadget, sans-serif;
+        }
+        body {
+            font-weight: bold;
+            color: black;
+            background-color: rgb(17, 16, 16);
+            margin: 0; /* Eliminar márgenes por defecto del body */
+        }
+        .buy-button {
+            background-color: #00ff15;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .buy-button:hover {
+            background-color: #68e600;
+        }
+        .add-to-cart-button {
+            background-color: #00ff15;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .add-to-cart-button:hover {
+            background-color: #68e600;
+        }
+        .cart-counter {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #114981;
+            color: rgb(8, 8, 8); /* Texto blanco para mejor contraste */
+            padding: 10px;
+            border: 10px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 20px 5px rgba(0, 0ucy0, 0, 0.1);
+            border-top: #631515 solid 5px; /* Borde superior rojo */
+        }
+        .price, .stock, .discount, h3 {
+            text-align: center; /* Centrar texto dentro de las tarjetas */
+        }
+        .quantity {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        let cartCount = 0;
+
+        function addToCart(productId) {
+            cartCount++;
+            document.getElementById('cart-counter').textContent = `Carrito: ${cartCount}`;
+            const productCard = document.getElementById(`product${productId}`);
+            const quantityInput = document.getElementById(`quantity${productId}`);
+            const stockSpan = productCard.querySelector('.stock-count');
+            const quantity = parseInt(quantityInput.value);
+            let currentStock = parseInt(stockSpan.textContent);
+
+            if (quantity <= currentStock && quantity > 0) {
+                currentStock -= quantity;
+                stockSpan.textContent = currentStock;
+                quantityInput.max = currentStock;
+                if (currentStock === 0) {
+                    productCard.classList.add('out-of-stock');
+                    quantityInput.disabled = true;
+                    productCard.querySelector('.add-to-cart-button').disabled = true;
+                    productCard.querySelector('.buy-button').disabled = true;
+                } else {
+                    quantityInput.value = 1;
+                }
+            } else {
+                alert('No hay suficiente stock disponible');
+                cartCount--;
+                document.getElementById('cart-counter').textContent = `Carrito: ${cartCount}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="cart-counter" class="cart-counter">Carrito: 0</div>
+    <header>
+        <h1>MON AMI</h1>
+        <img src="Banners-web-monami.jpg" alt="Promoción Especial" style="width: 1000px; height: 200px; border-radius: 10px; margin-top: 5px;">
+    </header>
+    <div class="container">
+        <!-- Producto 1 -->
+        <div class="product-card" id="product1">
+            <div class="discount" style="color: rgb(235, 225, 225);">10% OFF</div>
+            <img src="caja-6-kg-alimento-saludable-para-gatos-csuperfood-copia.jpg" alt="Royal Canin Mini Adult">
+            <h3 style="color: rgb(240, 238, 238);">Alimento Mon Ami 1,4kgs</h3>
+            <div class="price" style="color: rgb(243, 235, 235);">
+                <span class="discounted-price">$18,000</span>
+            </div>
+            <button class="buy-button" style="background-color: rgb(8, 182, 8);">COMPRAR</button>
+            <div class="stock" style="color: rgb(211, 223, 211);">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity1" style="color: rgb(241, 230, 230);">Cantidad:</label>
+                <input type="number" id="quantity1" name="quantity1" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(1)" style="background-color: rgb(15, 151, 10);">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 4 -->
+        <div class="product-card" id="product4">
+            <div class="discount">20% OFF</div>
+            <img src="mon-ami-carne-de-cordero_variacion_4482.jpg" alt="Royal Canin Maxi Adult">
+            <h3>Mon Ami alimento seco perros adultos 12kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$56,900</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">50</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity4">Cantidad:</label>
+                <input type="number" id="quantity4" name="quantity4" min="1" max="50" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(4)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 5 -->
+        <div class="product-card" id="product5">
+            <div class="discount">25% OFF</div>
+            <img src="mon ami churrasquito pollo" alt="Producto 5">
+            <h3>snack mon ami churrasquito pollo</h3>
+            <div class="price">
+                <span class="discounted-price">$2,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">40</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity5">Cantidad:</label>
+                <input type="number" id="quantity5" name="quantity5" min="1" max="40" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(5)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 6 -->
+        <div class="product-card" id="product6">
+            <div class="discount">10% OFF</div>
+            <img src="churrasquito carne" alt="Producto 6">
+            <h3>snack mon ami churrasquito carne</h3>
+            <div class="price">
+                <span class="discounted-price">$2,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity6">Cantidad:</label>
+                <input type="number" id="quantity6" name="quantity6" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(6)">Agregar al carrito</button>
+        </div>
+
+        <!-- [Resto de productos con el mismo formato] -->
+        <!-- Producto 7 -->
+        <div class="product-card" id="product7">
+            <div class="discount">5% OFF</div>
+            <img src="Mon Ami Snack Dental Clean" alt="Producto 7">
+            <h3>MON AMI SNACK DENTAL CLEAN</h3>
+            <div class="price">$2,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity7">Cantidad:</label>
+                <input type="number" id="quantity7" name="quantity7" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(7)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 8 -->
+        <div class="product-card" id="product8">
+            <div class="discount">15% OFF</div>
+            <img src="mon ami dental stick.webp" alt="Producto 8">
+            <h3>MON AMI DENTAL STICK</h3>
+            <div class="price">
+            <span class="discounted-price">$2,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity8">Cantidad:</label>
+            <input type="number" id="quantity8" name="quantity8" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(8)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 9 -->
+        <div class="product-card" id="product9">
+            <div class="discount">30% OFF</div>
+            <img src="MON AMI MEAT STICKS-CHICKEN.jpg" alt="Producto 9">
+            <h3>MON AMI MEAT STICKS CHICKEN 250G</h3>
+            <div class="price">
+            <span class="discounted-price">$7,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity9">Cantidad:</label>
+            <input type="number" id="quantity9" name="quantity9" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(9)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 10 -->
+        <div class="product-card" id="product10">
+            <div class="discount">50% OFF</div>
+            <img src="MON AMI MEAT STICKS-BEEF.jpg" alt="Producto 10">
+            <h3>MON AMI MEAT STICKS BEEF 250G</h3>
+            <div class="price">
+                <span class="discounted-price">$7,200</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">5</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity10">Cantidad:</label>
+            <input type="number" id="quantity10" name="quantity10" min="1" max="5" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(10)">Agregar al carrito</button>
+        </div>
+    </div>
+</body>
+</html>

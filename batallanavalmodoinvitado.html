@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalla Naval - Lo de Lalo Pet Shop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('https://img.freepik.com/free-vector/sea-waves-vector-seamless-abstract-hand-drawn-pattern_1284-39387.jpg') repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #114981;
+        }
+        #battleship-game {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 1100px; /* Aumentado para dar espacio al chat */
+            text-align: center;
+            border: 3px solid #114981;
+        }
+        #battleship-game canvas {
+            border: 2px solid #114981;
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #battleship-game canvas:hover {
+            transform: scale(1.02);
+        }
+        #game-status {
+            margin: 10px 0;
+            color: #01579b;
+            font-weight: bold;
+            font-size: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        #coin-counter {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #d4a017;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #start-game {
+            background-color: #007bff;
+            color: white;
+        }
+        #start-game:hover {
+            background-color: #0056b3;
+        }
+        #restart-game {
+            background-color: #28a745;
+            color: white;
+        }
+        #restart-game:hover {
+            background-color: #218838;
+        }
+        #back-to-shop {
+            background-color: #dc3545;
+            color: white;
+        }
+        #back-to-shop:hover {
+            background-color: #c82333;
+        }
+        #bet-amount {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100px;
+            font-size: 16px;
+        }
+        #game-mode {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        #game-mode:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        #welcome-message {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #114981;
+        }
+        #remaining-ships {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #d4a017;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        #game-boards {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        #chat-container {
+            width: 200px; /* Ancho reducido para el chat */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #chat-box {
+            width: 100%;
+            height: 300px; /* Altura ajustada para alinearse con los tableros */
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f9f9f9;
+            text-align: left;
+        }
+        #chat-box div {
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        #chat-box div:nth-child(odd) {
+            background-color: #e9f5ff; /* Azul claro para mensajes del jugador */
+        }
+        #chat-box div:nth-child(even) {
+            background-color: #ffe9e9; /* Rojo claro para mensajes del oponente */
+        }
+        .board-container {
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            #battleship-game {
+                width: 95%;
+                padding: 15px;
+            }
+            #game-boards {
+                flex-direction: column;
+                align-items: center;
+            }
+            #chat-container {
+                width: 100%;
+                max-width: 300px;
+                margin: 10px 0;
+            }
+            #chat-box {
+                height: 200px; /* Reducido en móviles */
+            }
+            canvas {
+                width: 200px !important;
+                height: 200px !important;
+            }
+            #game-status, #welcome-message {
+                font-size: 16px;
+            }
+            button, #bet-amount, #game-mode {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="position: fixed; top: 10px; left: 10px;">
+        <button onclick="logout()" style="background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            Cambiar de Usuario
+        </button>
+    </div>
+    <div style="position: fixed; top: 50px; right: 10px;">
+        <button onclick="claimCoins()" style="background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            Reclamar mis monedas
+        </button>
+    </div>
+    <div id="coin-counter">Monedas: 0</div>
+    <div id="battleship-game">
+        <h2>Batalla Naval - Lo de Lalo Pet Shop</h2>
+        <div id="welcome-message"></div>
+        <div id="game-status">¡Prepárate, capitán! Inicia una partida.</div>
+        <div id="remaining-ships">Barcos enemigos restantes: 5</div>
+        <div id="game-boards">
+            <div class="board-container">
+                <img id="player-photo" src="player.png" alt="Jugador" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <h3>Tu Tablero</h3>
+                <canvas id="player-board" width="300" height="300"></canvas>
+            </div>
+            <div id="chat-container">
+                <h3>Chat con tu oponente</h3>
+                <div id="chat-box"></div>
+                <div style="margin-top: 10px;">
+                    <input type="text" id="chat-input" placeholder="Escribe un mensaje..." style="width: 70%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <select id="emoji-selector" style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                        <option value="">😊</option>
+                        <option value="😂">😂</option>
+                        <option value="😎">😎</option>
+                        <option value="😢">😢</option>
+                        <option value="🔥">🔥</option>
+                        <option value="🎉">🎉</option>
+                        <option value="❤️">❤️</option>
+                        <option value="👍">👍</option>
+                        <option value="👎">👎</option>
+                        <option value="🙌">🙌</option>
+                        <option value="👏">👏</option>
+                        <option value="💪">💪</option>
+                        <option value="😅">😅</option>
+                        <option value="🤔">🤔</option>
+                        <option value="😴">😴</option>
+                        <option value="🤩">🤩</option>
+                        <option value="😡">😡</option>
+                        <option value="😇">😇</option>
+                        <option value="🥳">🥳</option>
+                        <option value="🤯">🤯</option>
+                        <option value="😱">😱</option>
+                        <option value="😜">😜</option>
+                        <option value="🤪">🤪</option>
+                        <option value="😋">😋</option>
+                        <option value="😷">😷</option>
+                        <option value="🤒">🤒</option>
+                        <option value="🤕">🤕</option>
+                        <option value="🤢">🤢</option>
+                        <option value="🤮">🤮</option>
+                        <option value="🤧">🤧</option>
+                        <option value="🥶">🥶</option>
+                        <option value="🥵">🥵</option>
+                        <option value="😵">😵</option>
+                        <option value="🤠">🤠</option>
+                        <option value="😎">😎</option>
+                        <option value="👻">👻</option>
+                        <option value="🎃">🎃</option>
+                        <option value="😈">😈</option>
+                        <option value="👽">👽</option>
+                        <option value="🤖">🤖</option>
+                        <option value="💀">💀</option>
+                        <option value="☠️">☠️</option>
+                        <option value="👾">👾</option>
+                        <option value="🎮">🎮</option>
+                        <option value="🎲">🎲</option>
+                        <option value="🃏">🃏</option>
+                        <option value="🎯">🎯</option>
+                        <option value="🏆">🏆</option>
+                        <option value="🥇">🥇</option>
+                        <option value="🥈">🥈</option>
+                        <option value="🥉">🥉</option>
+                        <option value="🏅">🏅</option>
+                        <option value="🎖️">🎖️</option>
+                        <option value="🏵️">🏵️</option>
+                        <option value="🎗️">🎗️</option>
+                        <option value="🎫">🎫</option>
+                        <option value="🎟️">🎟️</option>
+                        <option value="🎭">🎭</option>
+                        <option value="🎨">🎨</option>
+                        <option value="🎤">🎤</option>
+                        <option value="🎧">🎧</option>
+                        <option value="🎷">🎷</option>
+                        <option value="🎸">🎸</option>
+                        <option value="🎹">🎹</option>
+                        <option value="🎺">🎺</option>
+                        <option value="🎻">🎻</option>
+                        <option value="🥁">🥁</option>
+                        <option value="📯">📯</option>
+                        <option value="🎬">🎬</option>
+                        <option value="🎼">🎼</option>
+                        <option value="🎵">🎵</option>
+                        <option value="🎶">🎶</option>
+                        <option value="🎙️">🎙️</option>
+                        <option value="🎚️">🎚️</option>
+                        <option value="🎛️">🎛️</option>
+                        <option value="📻">📻</option>
+                        <option value="📱">📱</option>
+                        <option value="💻">💻</option>
+                        <option value="🖥️">🖥️</option>
+                        <option value="🖨️">🖨️</option>
+                        <option value="⌨️">⌨️</option>
+                        <option value="🖱️">🖱️</option>
+                        <option value="🖲️">🖲️</option>
+                        <option value="💾">💾</option>
+                        <option value="💿">💿</option>
+                        <option value="📀">📀</option>
+                        <option value="📷">📷</option>
+                        <option value="📸">📸</option>
+                        <option value="📹">📹</option>
+                        <option value="🎥">🎥</option>
+                        <option value="📽️">📽️</option>
+                        <option value="🎞️">🎞️</option>
+                        <option value="📞">📞</option>
+                        <option value="☎️">☎️</option>
+                        <option value="📟">📟</option>
+                        <option value="📠">📠</option>
+                        <option value="📡">📡</option>
+                        <option value="📺">📺</option>
+                        <option value="📻">📻</option>
+                        <option value="🎙️">🎙️</option>
+                    </select>
+                    <button onclick="sendMessage()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Enviar</button>
+                </div>
+            </div>
+            <div class="board-container">
+                <img id="enemy-photo" src="enemy.png" alt="Enemigo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 10px;">
+                <h3>Tablero Enemigo</h3>
+                <canvas id="enemy-board" width="300" height="300"></canvas>
+            </div>
+        </div>
+        <div class="controls">
+            <label for="game-mode">Modo de juego:</label>
+            <select id="game-mode" onchange="updateGameMode()">
+                <option value="vs-machine">Contra la Máquina</option>
+                <option value="vs-player" id="vs-player-option">Contra otro Jugador</option>
+            </select>
+            <label for="bet-amount">Apuesta (mínimo 1 moneda):</label>
+            <input type="number" id="bet-amount" min="1" value="1">
+            <button id="start-game" onclick="startGame()">Iniciar Partida</button>
+            <button id="restart-game" onclick="startGame()" style="display: none;">Reiniciar Partida</button>
+            <button id="back-to-shop" onclick="window.location.href='royalcanin.html'">Volver a la Tienda</button>
+        </div>
+        <!-- Mejores Jugadores -->
+        <div id="leaderboard" style="margin-top: 20px; text-align: center;">
+            <h3>Mejores Jugadores</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 0 auto; max-width: 600px;">
+                <thead>
+                    <tr style="background-color: #114981; color: white;">
+                        <th style="padding: 10px; border: 1px solid #ddd;">Posición</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Nombre</th>
+                        <th style="padding: 10px; border: 1px solid #ddd;">Monedas</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-body">
+                    <!-- Los datos se llenarán dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="login-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+        <div id="login-form">
+            <h3>Inicio de Sesión</h3>
+            <label for="username">Nombre:</label>
+            <input type="text" id="username" placeholder="Ingresa tu nombre" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+            <label for="password">Contraseña (6 dígitos):</label>
+            <input type="password" id="password" maxlength="6" placeholder="******" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+            <label for="photo">Foto de perfil (opcional):</label>
+            <input type="file" id="photo" accept="image/*" style="margin: 10px 0;">
+            <button onclick="login()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Iniciar Sesión</button>
+            <button onclick="showRegisterForm()" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Registrarse</button>
+            <button onclick="playAsGuest()" style="background-color: #d4a017; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Jugar como Invitado</button>
+            <button onclick="closeLoginModal()" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+        </div>
+        <div id="register-form" style="display: none;">
+            <h3>Registro</h3>
+            <label for="new-username">Nombre:</label>
+            <input type="text" id="new-username" placeholder="Elige un nombre" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+            <label for="new-password">Contraseña (6 dígitos):</label>
+            <input type="password" id="new-password" maxlength="6" placeholder="******" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+            <label for="new-photo">Foto de perfil (opcional):</label>
+            <input type="file" id="new-photo" accept="image/*" style="margin: 10px 0;">
+            <button onclick="register()" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Crear Cuenta</button>
+            <button onclick="showLoginForm()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Volver al Login</button>
+        </div>
+    </div>
+    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999;" onclick="closeLoginModal()"></div>
+
+    <audio id="hit-sound" src="https://www.soundjay.com/buttons/sounds/explosion-01.mp3"></audio>
+    <audio id="miss-sound" src="https://www.soundjay.com/nature/sounds/water-splash-01.mp3"></audio>
+    <audio id="win-sound" src="https://www.soundjay.com/buttons/sounds/cheer-01.mp3"></audio>
+    <audio id="lose-sound" src="https://www.soundjay.com/buttons/sounds/game-over-01.mp3"></audio>
+
+    <script>
+        // --- Gestión de usuarios ---
+        function saveUser(username, password, photo) {
+            let users = JSON.parse(localStorage.getItem('users')) || {};
+            if (users[username]) {
+                alert('¡Ese nombre de usuario ya existe! Elige otro.');
+                return false;
+            }
+            users[username] = { password, photo: photo || '', coins: 100 }; // 100 monedas iniciales
+            localStorage.setItem('users', JSON.stringify(users));
+            return true;
+        }
+
+        function validateUser(username, password) {
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            return users[username] && users[username].password === password;
+        }
+
+        function register() {
+            const username = document.getElementById('new-username').value.trim();
+            const password = document.getElementById('new-password').value.trim();
+            const photoInput = document.getElementById('new-photo');
+            const reader = new FileReader();
+
+            if (!username || password.length !== 6 || isNaN(password)) {
+                alert('Ingresa un nombre válido y una contraseña de 6 dígitos.');
+                return;
+            }
+
+            if (photoInput.files.length > 0) {
+                const file = photoInput.files[0];
+                reader.onload = function (e) {
+                    if (saveUser(username, password, e.target.result)) {
+                        saveUserData(username, e.target.result);
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                if (saveUser(username, password, '')) {
+                    saveUserData(username, '');
+                }
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const photoInput = document.getElementById('photo');
+            const reader = new FileReader();
+
+            if (!validateUser(username, password)) {
+                alert('Nombre de usuario o contraseña incorrectos.');
+                return;
+            }
+
+            if (photoInput.files.length > 0) {
+                const file = photoInput.files[0];
+                reader.onload = function (e) {
+                    saveUserData(username, e.target.result);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveUserData(username, '');
+            }
+        }
+
+        function saveUserData(username, photo) {
+            localStorage.setItem('userName', username);
+            localStorage.setItem('userPhoto', photo);
+            localStorage.removeItem('isGuest');
+            alert(`¡Bienvenido, ${username}!`);
+            closeLoginModal();
+            updateWelcomeMessage();
+            updatePlayerPhotos();
+            updateCoinDisplay();
+            updateLeaderboard();
+            enableMultiplayer();
+        }
+
+        function playAsGuest() {
+            localStorage.setItem('userName', 'Invitado');
+            localStorage.setItem('isGuest', 'true');
+            localStorage.setItem('guestCoins', JSON.stringify(100));
+            alert('¡Bienvenido, Invitado! Solo puedes jugar contra la máquina.');
+            closeLoginModal();
+            updateWelcomeMessage();
+            updatePlayerPhotos();
+            updateCoinDisplay();
+            disableMultiplayer();
+        }
+
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+        }
+
+        function logout() {
+            const username = localStorage.getItem('userName');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userPhoto');
+            localStorage.removeItem('isGuest');
+            localStorage.removeItem('guestCoins');
+            removeConnectedPlayer(username);
+            showLoginModal();
+        }
+
+        // --- Gestión de monedas ---
+        function getUserCoins() {
+            if (localStorage.getItem('isGuest') === 'true') {
+                return JSON.parse(localStorage.getItem('guestCoins')) || 0;
+            }
+            const username = localStorage.getItem('userName');
+            if (username) {
+                const users = JSON.parse(localStorage.getItem('users')) || {};
+                return users[username]?.coins || 0;
+            }
+            return 0;
+        }
+
+        function updateUserCoins(amount) {
+            if (localStorage.getItem('isGuest') === 'true') {
+                let coins = JSON.parse(localStorage.getItem('guestCoins')) || 0;
+                coins += amount;
+                if (coins < 0) {
+                    alert('¡No tienes suficientes monedas, capitán!');
+                    return false;
+                }
+                localStorage.setItem('guestCoins', JSON.stringify(coins));
+            } else {
+                const username = localStorage.getItem('userName');
+                if (username) {
+                    let users = JSON.parse(localStorage.getItem('users')) || {};
+                    let coins = users[username]?.coins || 0;
+                    coins += amount;
+                    if (coins < 0) {
+                        alert('¡No tienes suficientes monedas, capitán!');
+                        return false;
+                    }
+                    users[username].coins = coins;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    savePlayerScore(username, coins);
+                }
+            }
+            updateCoinDisplay();
+            return true;
+        }
+
+        function updateCoinDisplay() {
+            const coinDisplay = document.getElementById('coin-counter');
+            if (coinDisplay) {
+                coinDisplay.textContent = `Monedas: ${getUserCoins()}`;
+            }
+        }
+
+        function claimCoins() {
+            const username = localStorage.getItem('userName');
+            if (!username || username === 'Invitado') {
+                alert('Por favor, inicia sesión como usuario registrado para reclamar monedas.');
+                return;
+            }
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            let coins = users[username]?.coins || 0;
+            if (coins > 0) {
+                alert(`¡Has reclamado ${coins} monedas!`);
+                updateCoinDisplay();
+            } else {
+                alert('No tienes monedas para reclamar en este momento.');
+            }
+        }
+
+        // --- Batalla Naval ---
+        const GRID_SIZE = 10;
+        const CELL_SIZE = 30;
+        const SHIPS = [
+            { name: 'Portaviones', size: 5 },
+            { name: 'Acorazado', size: 4 },
+            { name: 'Crucero', size: 3 },
+            { name: 'Submarino', size: 3 },
+            { name: 'Destructor', size: 2 }
+        ];
+
+        let playerBoard = [];
+        let enemyBoard = [];
+        let playerShips = [];
+        let enemyShips = [];
+        let gameState = 'setup';
+        let currentTurn = 'player';
+        let betAmount = 0;
+        let gameMode = 'vs-machine';
+
+        function initBoards() {
+            playerBoard = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill('water'));
+            enemyBoard = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill('water'));
+            playerShips = [];
+            enemyShips = [];
+        }
+
+        function drawBoards() {
+            const playerCanvas = document.getElementById('player-board');
+            const enemyCanvas = document.getElementById('enemy-board');
+            const playerCtx = playerCanvas.getContext('2d');
+            const enemyCtx = enemyCanvas.getContext('2d');
+
+            playerCtx.clearRect(0, 0, playerCanvas.width, playerCanvas.height);
+            enemyCtx.clearRect(0, 0, enemyCanvas.width, enemyCanvas.height);
+
+            for (let i = 0; i < GRID_SIZE; i++) {
+                for (let j = 0; j < GRID_SIZE; j++) {
+                    playerCtx.strokeStyle = '#114981';
+                    playerCtx.strokeRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    enemyCtx.strokeStyle = '#114981';
+                    enemyCtx.strokeRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                    if (playerBoard[i][j] === 'ship') {
+                        playerCtx.fillStyle = 'gray';
+                        playerCtx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    } else if (playerBoard[i][j] === 'hit') {
+                        playerCtx.fillStyle = 'red';
+                        animateExplosion(playerCtx, j * CELL_SIZE, i * CELL_SIZE);
+                    } else if (playerBoard[i][j] === 'miss') {
+                        playerCtx.fillStyle = 'blue';
+                        playerCtx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+
+                    if (enemyBoard[i][j] === 'hit') {
+                        enemyCtx.fillStyle = 'red';
+                        animateExplosion(enemyCtx, j * CELL_SIZE, i * CELL_SIZE);
+                    } else if (enemyBoard[i][j] === 'miss') {
+                        enemyCtx.fillStyle = 'blue';
+                        enemyCtx.fillRect(j * CELL_SIZE, i * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                }
+            }
+        }
+
+        function animateExplosion(ctx, x, y) {
+            ctx.fillStyle = 'orange';
+            ctx.beginPath();
+            ctx.arc(x + CELL_SIZE / 2, y + CELL_SIZE / 2, CELL_SIZE / 3, 0, Math.PI * 2);
+            ctx.fill();
+            setTimeout(() => {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+                drawBoards();
+            }, 200);
+        }
+
+        function placeShips(board, ships) {
+            SHIPS.forEach(ship => {
+                let placed = false;
+                let attempts = 0;
+                while (!placed && attempts < 100) {
+                    const isHorizontal = Math.random() < 0.5;
+                    const row = Math.floor(Math.random() * GRID_SIZE);
+                    const col = Math.floor(Math.random() * GRID_SIZE);
+                    if (canPlaceShip(board, row, col, ship.size, isHorizontal)) {
+                        for (let i = 0; i < ship.size; i++) {
+                            if (isHorizontal) {
+                                board[row][col + i] = 'ship';
+                            } else {
+                                board[row + i][col] = 'ship';
+                            }
+                        }
+                        ships.push({ name: ship.name, size: ship.size, hits: 0 });
+                        placed = true;
+                    }
+                    attempts++;
+                }
+                if (!placed) {
+                    console.error(`No se pudo colocar el barco: ${ship.name}`);
+                    alert('Error al colocar los barcos. Por favor, reinicia el juego.');
+                }
+            });
+        }
+
+        function canPlaceShip(board, row, col, size, isHorizontal) {
+            if (isHorizontal) {
+                if (col + size > GRID_SIZE) return false;
+                for (let i = 0; i < size; i++) {
+                    if (board[row][col + i] !== 'water') return false;
+                }
+            } else {
+                if (row + size > GRID_SIZE) return false;
+                for (let i = 0; i < size; i++) {
+                    if (board[row + i][col] !== 'water') return false;
+                }
+            }
+            return true;
+        }
+
+        function startGame() {
+            localStorage.removeItem('battleshipGameState');
+            betAmount = parseInt(document.getElementById('bet-amount').value);
+            if (isNaN(betAmount) || betAmount < 1) {
+                alert('La apuesta mínima es de 1 moneda, capitán. ¡Elige una cantidad válida!');
+                return;
+            }
+            if (!updateUserCoins(-betAmount)) {
+                alert('No tienes suficientes monedas para esta apuesta. ¡Compra algo en la tienda para ganar más!');
+                return;
+            }
+
+            initBoards();
+            placeShips(playerBoard, playerShips);
+            if (gameMode === 'vs-machine') {
+                placeShips(enemyBoard, enemyShips);
+                gameState = 'playing';
+                currentTurn = 'player';
+                document.getElementById('game-status').textContent = '¡Tu turno, capitán! Dispara en el tablero enemigo.';
+                document.getElementById('enemy-board').onclick = handlePlayerAttack;
+            } else {
+                setupMultiplayerGame();
+            }
+            document.getElementById('remaining-ships').textContent = `Barcos enemigos restantes: ${enemyShips.length}`;
+            document.getElementById('start-game').style.display = 'none';
+            document.getElementById('restart-game').style.display = 'inline-block';
+            drawBoards();
+        }
+
+        function handlePlayerAttack(e) {
+            if (gameState !== 'playing' || currentTurn !== 'player') {
+                alert('¡No es tu turno o el juego no está activo!');
+                return;
+            }
+
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const row = Math.floor(y / CELL_SIZE);
+            const col = Math.floor(x / CELL_SIZE);
+
+            if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
+                alert('¡Disparo fuera del tablero! Apunta mejor, capitán.');
+                return;
+            }
+
+            playerAttack(row, col);
+        }
+
+        function playerAttack(row, col) {
+            if (enemyBoard[row][col] === 'hit' || enemyBoard[row][col] === 'miss') {
+                alert('¡Ya disparaste ahí! Elige otra posición.');
+                return;
+            }
+
+            if (enemyBoard[row][col] === 'ship') {
+                enemyBoard[row][col] = 'hit';
+                enemyShips.forEach(ship => {
+                    if (ship.hits < ship.size) ship.hits++;
+                });
+                document.getElementById('hit-sound').play();
+                document.getElementById('game-status').textContent = '¡Buen tiro, capitán! ¡Tocado! Sigue disparando.';
+            } else {
+                enemyBoard[row][col] = 'miss';
+                document.getElementById('miss-sound').play();
+                document.getElementById('game-status').textContent = '¡Agua! Turno del enemigo...';
+                currentTurn = gameMode === 'vs-machine' ? 'enemy' : 'player2';
+                if (gameMode === 'vs-machine') {
+                    setTimeout(enemyAttack, 1000);
+                } else {
+                    alert('Jugador 2: ¡Tu turno! Inicia sesión para disparar.');
+                    logout();
+                }
+            }
+
+            drawBoards();
+            updateRemainingShips();
+            checkGameOver();
+        }
+
+        function enemyAttack() {
+            if (gameState !== 'playing' || currentTurn !== 'enemy') return;
+
+            let row, col;
+            let attempts = 0;
+            do {
+                row = Math.floor(Math.random() * GRID_SIZE);
+                col = Math.floor(Math.random() * GRID_SIZE);
+                attempts++;
+                if (attempts > 100) {
+                    console.error('No se encontraron posiciones válidas para el enemigo.');
+                    alert('Error en el turno del enemigo. Por favor, reinicia el juego.');
+                    return;
+                }
+            } while (playerBoard[row][col] === 'hit' || playerBoard[row][col] === 'miss');
+
+            if (playerBoard[row][col] === 'ship') {
+                playerBoard[row][col] = 'hit';
+                playerShips.forEach(ship => {
+                    if (ship.hits < ship.size) ship.hits++;
+                });
+                document.getElementById('hit-sound').play();
+                document.getElementById('game-status').textContent = '¡El enemigo te dio duro! Su turno de nuevo.';
+                currentTurn = 'enemy';
+                setTimeout(enemyAttack, 1000);
+            } else {
+                playerBoard[row][col] = 'miss';
+                document.getElementById('miss-sound').play();
+                document.getElementById('game-status').textContent = '¡El enemigo falló! Tu turno, capitán.';
+                currentTurn = 'player';
+            }
+
+            drawBoards();
+            checkGameOver();
+        }
+
+        function updateRemainingShips() {
+            const remaining = enemyShips.filter(ship => ship.hits < ship.size).length;
+            document.getElementById('remaining-ships').textContent = `Barcos enemigos restantes: ${remaining}`;
+        }
+
+        function checkGameOver() {
+            const playerLost = playerShips.every(ship => ship.hits >= ship.size);
+            const enemyLost = enemyShips.every(ship => ship.hits >= ship.size);
+
+            if (playerLost || enemyLost) {
+                gameState = 'finished';
+                document.getElementById('enemy-board').onclick = null;
+                if (playerLost) {
+                    document.getElementById('lose-sound').play();
+                    document.getElementById('game-status').textContent = `¡Perdiste, capitán! El enemigo hundió tus barcos. Apostaste ${betAmount} monedas.`;
+                    if (gameMode === 'vs-player') {
+                        updateUserCoins(0); // El perdedor no gana monedas
+                        alert('Jugador 2 gana. ¡Inicia sesión para reclamar tus monedas!');
+                        logout(); // Forzar login del ganador
+                    }
+                } else {
+                    document.getElementById('win-sound').play();
+                    if (gameMode === 'vs-player') {
+                        updateUserCoins(betAmount * 2);
+                        document.getElementById('game-status').textContent = `¡Victoria, capitán! Hundiste todos los barcos enemigos. Ganaste ${betAmount * 2} monedas.`;
+                    } else {
+                        document.getElementById('game-status').textContent = `¡Victoria, capitán! Hundiste todos los barcos enemigos. (No se ganan monedas contra la máquina.)`;
+                    }
+                }
+                document.getElementById('restart-game').textContent = 'Jugar de Nuevo';
+            }
+        }
+
+        function showLoginModal() {
+            document.getElementById('login-modal').style.display = 'block';
+            document.getElementById('modal-overlay').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        function updateWelcomeMessage() {
+            const username = localStorage.getItem('userName');
+            if (username) {
+                document.getElementById('welcome-message').textContent = `¡Bienvenido, ${username}! Enfréntate al enemigo y gana monedas.`;
+            }
+        }
+
+        function updateLeaderboard() {
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            const players = Object.keys(users).map(username => ({
+                name: username,
+                coins: users[username].coins
+            }));
+
+            players.sort((a, b) => b.coins - a.coins);
+
+            players.slice(0, 10).forEach((player, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${index + 1}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${player.name}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${player.coins}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        function savePlayerScore(name, coins) {
+            const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            const existingPlayer = leaderboard.find(player => player.name === name);
+
+            if (existingPlayer) {
+                existingPlayer.coins = Math.max(existingPlayer.coins, coins);
+            } else {
+                leaderboard.push({ name, coins });
+            }
+
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+            updateLeaderboard();
+        }
+
+        function updatePlayerPhotos() {
+            const playerPhoto = document.getElementById('player-photo');
+            const enemyPhoto = document.getElementById('enemy-photo');
+
+            const userPhoto = localStorage.getItem('userPhoto');
+            if (userPhoto) {
+                playerPhoto.src = userPhoto;
+            } else {
+                playerPhoto.src = 'default-player.png';
+            }
+
+            enemyPhoto.src = 'default-enemy.png';
+        }
+
+        function sendMessage() {
+            const chatInput = document.getElementById('chat-input');
+            const emojiSelector = document.getElementById('emoji-selector');
+            const chatBox = document.getElementById('chat-box');
+            const message = chatInput.value.trim();
+            const emoji = emojiSelector.value;
+
+            if (message === '' && emoji === '') {
+                alert('No puedes enviar un mensaje vacío.');
+                return;
+            }
+
+            const playerMessage = document.createElement('div');
+            playerMessage.style.color = '#007bff';
+            playerMessage.style.marginBottom = '5px';
+            playerMessage.innerHTML = `Tú: ${message} ${emoji}`;
+            chatBox.appendChild(playerMessage);
+
+            if (gameMode === 'vs-machine') {
+                setTimeout(() => {
+                    const opponentMessage = document.createElement('div');
+                    opponentMessage.style.color = '#dc3545';
+                    opponentMessage.style.marginBottom = '5px';
+                    opponentMessage.innerHTML = `Oponente: Estoy pensando... 😂`;
+                    chatBox.appendChild(opponentMessage);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 1000);
+            }
+
+            chatInput.value = '';
+            emojiSelector.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function saveGameState() {
+            const gameStateData = {
+                playerBoard,
+                enemyBoard,
+                playerShips,
+                enemyShips,
+                gameState,
+                currentTurn,
+                betAmount,
+                gameMode
+            };
+            localStorage.setItem('battleshipGameState', JSON.stringify(gameStateData));
+        }
+
+        function loadGameState() {
+            const savedState = JSON.parse(localStorage.getItem('battleshipGameState'));
+            if (savedState) {
+                playerBoard = savedState.playerBoard;
+                enemyBoard = savedState.enemyBoard;
+                playerShips = savedState.playerShips;
+                enemyShips = savedState.enemyShips;
+                gameState = savedState.gameState;
+                currentTurn = savedState.currentTurn;
+                betAmount = savedState.betAmount;
+                gameMode = savedState.gameMode;
+
+                drawBoards();
+                document.getElementById('game-status').textContent = gameState === 'playing' 
+                    ? (currentTurn === 'player' ? '¡Tu turno, capitán!' : 'Turno del enemigo...')
+                    : '¡Partida pausada!';
+                document.getElementById('remaining-ships').textContent = `Barcos enemigos restantes: ${enemyShips.filter(ship => ship.hits < ship.size).length}`;
+            }
+        }
+
+        function addConnectedPlayer(username) {
+            let connectedPlayers = JSON.parse(localStorage.getItem('connectedPlayers')) || [];
+            if (!connectedPlayers.includes(username)) {
+                connectedPlayers.push(username);
+                localStorage.setItem('connectedPlayers', JSON.stringify(connectedPlayers));
+            }
+        }
+
+        function removeConnectedPlayer(username) {
+            let connectedPlayers = JSON.parse(localStorage.getItem('connectedPlayers')) || [];
+            connectedPlayers = connectedPlayers.filter(player => player !== username);
+            localStorage.setItem('connectedPlayers', JSON.stringify(connectedPlayers));
+        }
+
+        function updateGameMode() {
+            gameMode = document.getElementById('game-mode').value;
+            if (gameMode === 'vs-player' && localStorage.getItem('isGuest') === 'true') {
+                alert('¡Los invitados solo pueden jugar contra la máquina!');
+                document.getElementById('game-mode').value = 'vs-machine';
+                gameMode = 'vs-machine';
+            }
+        }
+
+        function enableMultiplayer() {
+            document.getElementById('vs-player-option').disabled = false;
+        }
+
+        function disableMultiplayer() {
+            document.getElementById('vs-player-option').disabled = true;
+            document.getElementById('game-mode').value = 'vs-machine';
+            gameMode = 'vs-machine';
+        }
+
+        function setupMultiplayerGame() {
+            alert('Jugador 2: Por favor, inicia sesión para colocar tus barcos.');
+            logout();
+            gameState = 'setup-player2';
+            document.getElementById('game-status').textContent = 'Jugador 2: Coloca tus barcos en el tablero.';
+            document.getElementById('player-board').onclick = (e) => handleShipPlacement(e);
+        }
+
+        function handleShipPlacement(e) {
+            if (gameState !== 'setup-player2') return;
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const row = Math.floor(y / CELL_SIZE);
+            const col = Math.floor(x / CELL_SIZE);
+
+            if (canPlaceShip(enemyBoard, row, col, 3, true)) {
+                for (let i = 0; i < 3; i++) {
+                    enemyBoard[row][col + i] = 'ship';
+                }
+                enemyShips.push({ name: 'Barco', size: 3, hits: 0 });
+                gameState = 'playing';
+                currentTurn = 'player1';
+                document.getElementById('game-status').textContent = '¡Turno del Jugador 1! Dispara en el tablero enemigo.';
+                document.getElementById('player-board').onclick = null;
+                document.getElementById('enemy-board').onclick = handlePlayerAttack;
+                drawBoards();
+            } else {
+                alert('No se puede colocar el barco ahí. Intenta otra posición.');
+            }
+        }
+
+        window.onload = () => {
+            loadGameState();
+            updatePlayerPhotos();
+            updateLeaderboard();
+            const username = localStorage.getItem('userName');
+            if (username && username !== 'Invitado') {
+                updateWelcomeMessage();
+                enableMultiplayer();
+            } else {
+                showLoginModal();
+                disableMultiplayer();
+            }
+        };
+
+        window.onbeforeunload = () => {
+            const username = localStorage.getItem('userName');
+            if (username) {
+                removeConnectedPlayer(username);
+            }
+            saveGameState();
+        };
+    </script>
+</body>
+</html>

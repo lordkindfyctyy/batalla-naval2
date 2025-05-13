@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LO DE LALO PET SHOP</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cart.css">
+    <script src="cart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <script>
+        let cart = [];
+        let cartCount = 0;
+
+        function addToCart(productId) {
+            const productCard = document.getElementById(`product${productId}`);
+            const productName = productCard.querySelector('h3').textContent;
+            const productDescription = productCard.querySelector('.description').textContent; // Capturar la descripción
+            const productImage = productCard.querySelector('img').src;
+            const quantityInput = productCard.querySelector('input[type="number"]');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+            const priceText = productCard.querySelector('.discounted-price, .original-price').textContent.replace('$', '').replace(',', '');
+            const price = parseInt(priceText);
+
+            if (quantity <= 0) {
+                alert("Por favor, selecciona una cantidad válida.");
+                return;
+            }
+
+            const existingProduct = cart.find(item => item.id === productId);
+            if (existingProduct) {
+                existingProduct.quantity += quantity;
+            } else {
+                cart.push({ id: productId, name: productName, description: productDescription, image: productImage, quantity, price });
+            }
+
+            cartCount += quantity;
+            updateCart();
+            updateCartCounter();
+
+            // Otorgar monedas por la compra
+            updateUserCoins(quantity); // Una moneda por cada producto comprado
+
+            // Guardar la compra
+            savePurchase(productName);
+        }
+
+        function updateCart() {
+            const cartContainer = document.getElementById('cart-items');
+            cartContainer.innerHTML = '';
+
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div class="cart-item-details">
+                        <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                        <div>
+                            <span><strong>${item.name}</strong></span>
+                            <span>${item.description}</span> <!-- Mostrar la descripción -->
+                            <span>Cantidad: ${item.quantity}</span>
+                            <span>Subtotal: $${subtotal.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button class="remove-button" onclick="removeFromCart(${index})">Eliminar</button>
+                `;
+                cartContainer.appendChild(cartItem);
+            });
+
+            document.getElementById('cart-total').textContent = `Total: $${total.toLocaleString()}`;
+        }
+
+        function updateCartCounter() {
+            const cartCounter = document.getElementById('cart-counter');
+            cartCounter.textContent = `Carrito: ${cartCount}`;
+        }
+
+        function removeFromCart(index) {
+            const removedProduct = cart[index];
+            cartCount -= removedProduct.quantity;
+            cart.splice(index, 1);
+            updateCart();
+            updateCartCounter();
+        }
+
+        function sendCartToWhatsApp() {
+            if (cart.length === 0) {
+                alert("El carrito está vacío. Agrega productos antes de enviar el pedido.");
+                return;
+            }
+
+            let message = "¡Hola! Quiero realizar un pedido:\n\n";
+            let total = 0;
+
+            cart.forEach(item => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+                message += `${item.name}\nDescripción: ${item.description}\nCantidad: ${item.quantity}\nSubtotal: $${subtotal.toLocaleString()}\n\n`;
+            });
+
+            message += `Total: $${total.toLocaleString()}\n\n`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappNumber = "+541164722908";
+            const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+            window.open(whatsappURL, "_blank");
+        }
+
+        // Cargar el carrito desde cart.html
+        async function loadCart() {
+            const response = await fetch('cart.html');
+            const cartHTML = await response.text();
+            document.body.insertAdjacentHTML('beforeend', cartHTML);
+        }
+
+        loadCart();
+
+        function searchProducts() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                if (productName.includes(input)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function showLoginModal() {
+            document.getElementById('login-modal').style.display = 'block';
+            document.getElementById('modal-overlay').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        function loginWithEmail() {
+            const email = document.getElementById('email-input').value;
+            if (!email) {
+                alert('Por favor, ingresa un email válido.');
+                return;
+            }
+
+            // Guardar el email en localStorage
+            localStorage.setItem('userEmail', email);
+
+            // Recuperar compras anteriores
+            const previousPurchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            alert(`Bienvenido, ${email}. Tus compras anteriores: ${previousPurchases.length > 0 ? previousPurchases.join(', ') : 'No tienes compras registradas.'}`);
+
+            closeLoginModal();
+        }
+
+        function savePurchase(productName) {
+            const email = localStorage.getItem('userEmail');
+            if (!email) {
+                alert('Por favor, inicia sesión para guardar tus compras.');
+                return;
+            }
+
+            // Guardar la compra en localStorage
+            const purchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            purchases.push(productName);
+            localStorage.setItem(`purchases_${email}`, JSON.stringify(purchases));
+
+            alert(`Compra guardada: ${productName}`);
+        }
+
+        function handleCredentialResponse(response) {
+            const data = jwt_decode(response.credential); // Decodificar el token JWT
+            const email = data.email;
+
+            // Guardar el email en localStorage
+            localStorage.setItem('userEmail', email);
+
+            // Mostrar un mensaje de bienvenida
+            alert(`Bienvenido, ${email}.`);
+
+            // Recuperar compras anteriores
+            const previousPurchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            alert(`Tus compras anteriores: ${previousPurchases.length > 0 ? previousPurchases.join(', ') : 'No tienes compras registradas.'}`);
+        }
+
+        function getUserCoins() {
+            return JSON.parse(localStorage.getItem('userCoins')) || 0;
+        }
+
+        function updateUserCoins(amount) {
+            let coins = getUserCoins();
+            coins += amount;
+            localStorage.setItem('userCoins', JSON.stringify(coins));
+            updateCoinDisplay();
+        }
+
+        function updateCoinDisplay() {
+            const coinDisplay = document.getElementById('coin-counter');
+            if (coinDisplay) {
+                coinDisplay.textContent = `Monedas: ${getUserCoins()}`;
+            }
+        }
+
+        window.onload = () => {
+            updateCoinDisplay();
+            document.getElementById('welcome-message').textContent = `Bienvenido, Invitado! Tienes ${getUserCoins()} monedas para jugar a la batalla naval.`;
+        };
+    </script>
+    <style>
+        body {
+
+        .product-card h3,
+        .product-card .description,
+        .product-card .price,
+        .product-card .stock,
+        .cart h2,
+        .cart .cart-total,
+        .cart-item-details span {
+            color: black; /* Asegurarte de que todos los textos específicos también sean negros */
+        }
+        .gold-coin {
+            width: 200px; /* Aumentar el ancho por 5 */
+            height: 200px; /* Aumentar la altura por 5 */
+            animation: spin 6s linear infinite;
+        }
+        .gold-coin-container {
+            position: fixed;
+            top: 50px;
+            right: 50px;
+            z-index: 1000;
+        }
+
+        .gold-coin {
+            width: 50px;
+            height: 50px;
+            animation: spin 6s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotateY(0deg);
+            }
+            to {
+                transform: rotateY(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        
+            <div class="top-bar">
+                <span>CON TU COMPRA TE LLEVAS TOKENS GRATIS DE LA COMUNIDAD</span>
+                <span>TAMBIÉN TENEMOS 10% DE DESCUENTO EN TU SEGUNDA UNIDAD</span>
+            </div>
+            <div class="brand-banner">
+                <div class="slideshow-container">
+                    <div class="mySlides fade">
+                        <img src="banner-royal-canin.webp" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="BANER LO DE LALO PET SHOP.png" style="width:100%">
+                    </div>
+                    <div class="mySlides fade">
+                        <img src="Banners-web-monami.jpg" style="width:100%">
+                    </div>
+                </div>
+                <br>
+                <div style="text-align:center">
+                    <span class="dot" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                    <span class="dot" onclick="currentSlide(3)"></span>
+                </div>
+            </div>
+            <script>
+                let slideIndex = 0;
+                showSlides();
+
+                function showSlides() {
+                    const slides = document.getElementsByClassName("mySlides");
+                    const dots = document.getElementsByClassName("dot");
+                    for (let i = 0; i < slides.length; i++) {
+                        slides[i].style.display = "none";
+                    }
+                    slideIndex++;
+                    if (slideIndex > slides.length) { slideIndex = 1 }
+                    for (let i = 0; i < dots.length; i++) {
+                        dots[i].className = dots[i].className.replace(" active", "");
+                    }
+                    slides[slideIndex - 1].style.display = "block";
+                    dots[slideIndex - 1].className += " active";
+                    setTimeout(showSlides, 6000); // Change image every 3 seconds
+                }
+
+                function currentSlide(n) {
+                    slideIndex = n - 1;
+                    showSlides();
+                }
+            </script>
+            <style>
+                .slideshow-container {
+                    position: relative;
+                    max-width: 100%;
+                    margin: auto;
+                }
+                .mySlides {
+                    display: none;
+                }
+                .fade {
+                    animation: fade 3s;
+                }
+                @keyframes fade {
+                    from { opacity: .4 }
+                    to { opacity: 1 }
+                }
+                .dot {
+                    height: 15px;
+                    width: 15px;
+                    margin: 0 2px;
+                    background-color: #bbb;
+                    border-radius: 50%;
+                    display: inline-block;
+                    transition: background-color 0.6s ease;
+                    cursor: pointer;
+                }
+                .dot.active {
+                    background-color: #717171;
+                }
+            </style>
+        
+        <div class="options">
+            <div class="option">ENVÍO GRATIS <br> En el día comprando antes de las 12hs</div>
+            <div class="option">MEJOR PRECIO <br> Encuentra el mejor precio del mercado</div>
+            <div class="option">MEDIOS DE PAGO <br> Con Mercado Pago, compras seguras</div>
+            <div class="option">RETIRO EN TIENDA <br> Beneficios y regalos exclusivos</div>
+        </div>
+
+        <footer>
+            <style>
+                .whatsapp-button img {
+                    width: 50px; /* Ajustar el ancho del icono */
+                    height: 30px; /* Ajustar la altura del icono */
+                }
+            </style>
+            
+            <a href="https://wa.me/+541164722908?text=¡Hola!%20Quiero%20más%20información" target="_blank" class="whatsapp-button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" width="10" height="10">
+            </a>
+            <style>
+                .google-maps-logo img {
+                    width: 130px; /* Ajustar el ancho del logo */
+                    height: 130px; /* Ajustar la altura del logo */
+                }
+            </style>
+            <a href="https://www.google.com/maps/place/Lo+de+Lalo+PetShop/@-34.4384335,-58.5618485,17z/data=!3m1!4b1!4m6!3m5!1s0x95bca57cb1f2c315:0x3087ee7e5ed16880!8m2!3d-34.438438!4d-58.5592736!16s%2Fg%2F11gf608q9g?entry=ttu&g_ep=EgoyMDI1MDQxNC4xIKXMDSoASAFQAw%3D%3D" target="_blank" class="google-maps-logo">
+                <img src="http://www.logoeps.net/wp-content/uploads/2016/08/Google-Maps-logo.jpg" alt="Ubicación">
+                <img src="foto local del lado de afuera.png" alt="Foto del local por fuera" style="width: 200px; height: auto; margin-top: 10px;">
+            </a>
+        </footer>
+        <div class="gold-coin-container" style="left: 10px; right: auto;">
+            <div class="gold-coin" style="width: 200px; height: 200px; position: relative; perspective: 1000px;">
+            <div class="coin-sides" style="width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; animation: spin 6s linear infinite;">
+                <img src="MONEDA LO DE LALO LA Q VA PARTE DELANTERA .png" alt="moneda de oro frente" style="width: 100%; height: 100%; position: absolute; backface-visibility: hidden;">
+                <img src="MONEDA LO DE LALO LA Q VA PARTE DELANTERA .png" alt="moneda de oro reverso" style="width: 100%; height: 100%; position: absolute; transform: rotateY(180deg); backface-visibility: hidden;">
+            </div>
+            </div>
+        </div>
+        <style>
+            @keyframes spin {
+            from {
+                transform: rotateY(0deg);
+            }
+            to {
+                transform: rotateY(360deg);
+            }
+            }
+        </style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Food Brands</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="cart.css">
+    <script src="cart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Row 1 -->
+        <div class="logo">
+            <a href="eukanuba.html">
+                <img src="eukanuba logo.png" alt="Eukanuba Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="iams.html">
+                <img src="IAMS.png" alt="IAMS Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="pedigree.html">
+                <img src="pedigre relleno.jpg" alt="Pedigree Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="ROYALCANIN1.html">
+                <img src="royal canin.webp" alt="Whiskas Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="old-prince.html">
+                <img src="logo-old-prince.png" alt="Old Prince Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="maintenance.html">
+                <img src="maintenance.png" alt="Maintenance Criadores Logo">
+            </a>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="logo">
+            <a href="monami.html">
+            <img src="mon ami.jpg" alt="monmi Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="proplan.html">
+            <img src="purina-proplan-logo-png_seeklogo-113931.png" alt="Purina Pro Plan Logo">
+        </a>
+        </div>
+        <div class="logo">
+            <a href="excellent.html">
+            <img src="excellent_horizontal_logo.webp" alt="Excellent Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <a href="dogchow.html">
+            <img src="dog chow.jpg" alt="Dog Chow Logo">
+        </a>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="logo">
+            <a href="performance.html">
+            <img src="performan logo.jpg" alt="Royal Canin Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <img src="sieger.png" alt="Sieger Logo">
+        </div>
+        <div class="logo">
+            <a href="unik.html">
+            <img src="unik.jpg" alt="Unik Logo">
+            </a>
+        </div>
+        <div class="logo">
+            <img src="vital kcan.jpg" alt="Vital Can Logo">
+        </div>
+        <div class="logo">
+            <img src="dog selection.png" alt="Dog Selection Logo">
+        </div>
+    </div>
+    <!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="icon" href="" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROYAL CANIN</title>
+    <link rel="stylesheet" href="cart.css">
+    <script src="cart.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <style>
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 20px;
+            padding: 20px; /* Espacio adicional alrededor del contenedor */
+        }
+        .product-card {
+            width: 300px; /* Tamaño uniforme para todas las tarjetas */
+            box-sizing: border-box;
+            border: 2px solid #db0e0e;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; /* Usar flex para alinear contenido verticalmente */
+            flex-direction: column; /* Apilar elementos verticalmente */
+            align-items: center; /* Centrar horizontalmente */
+            height: 530px; /* Altura fija para uniformidad */
+        }
+        .product-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .product-card img {
+            width: 200px; /* Tamaño uniforme para todas las imágenes */
+            height: 200px;
+            object-fit: contain; /* Mantener proporciones sin deformar */
+            border-radius: 10px;
+            border: 2px solid #631515;
+            margin: 10px 0; /* Margen solo arriba y abajo */
+        }
+        header {
+            background: linear-gradient(to right, rgb(128, 27, 27), rgb(248, 247, 246));
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        h1 {
+            font-family: 'Arial Black', Gadget, sans-serif;
+        }
+        body {
+            font-weight: bold;
+            color: black;
+            background-color: white;
+            margin: 0; /* Eliminar márgenes por defecto del body */
+        }
+        .buy-button {
+            background-color: #00ff15;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .buy-button:hover {
+            background-color: #68e600;
+        }
+        .add-to-cart-button {
+            background-color: #00ff15;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .add-to-cart-button:hover {
+            background-color: #68e600;
+        }
+        .cart-counter {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #114981;
+            color: rgb(17, 16, 16); /* Texto blanco para mejor contraste */
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0ucy0, 0, 0.1);
+        }
+        .price, .stock, .discount, h3 {
+            text-align: center; /* Centrar texto dentro de las tarjetas */
+        }
+        .quantity {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .cart-item-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cart-item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .remove-button {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .remove-button:hover {
+            background-color: #ff1a1a;
+        }
+        .cart {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .cart h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #01579b;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            animation: slideInFromLeft 0.5s ease-out;
+        }
+
+        .cart-item-image {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+
+        .cart-item-details {
+            flex: 1;
+        }
+
+        .cart-item-details span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .remove-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .remove-button:hover {
+            background-color: #c82333;
+        }
+
+        .cart-total {
+            text-align: center;
+            font-weight: bold;
+            color: #01579b;
+            margin-top: 10px;
+        }
+
+        .buy-button {
+            display: block;
+            width: 100%;
+            background-color: #25d366;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .buy-button:hover {
+            background-color: #1ebe57;
+        }
+
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+
+        #search-input {
+            padding: 10px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .search-bar button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        let cart = [];
+        let cartCount = 0;
+
+        function addToCart(productId) {
+            const productCard = document.getElementById(`product${productId}`);
+            const productName = productCard.querySelector('h3').textContent;
+            const productDescription = productCard.querySelector('.description').textContent; // Capturar la descripción
+            const productImage = productCard.querySelector('img').src;
+            const quantityInput = productCard.querySelector('input[type="number"]');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+            const priceText = productCard.querySelector('.discounted-price, .original-price').textContent.replace('$', '').replace(',', '');
+            const price = parseInt(priceText);
+
+            if (quantity <= 0) {
+                alert("Por favor, selecciona una cantidad válida.");
+                return;
+            }
+
+            const existingProduct = cart.find(item => item.id === productId);
+            if (existingProduct) {
+                existingProduct.quantity += quantity;
+            } else {
+                cart.push({ id: productId, name: productName, description: productDescription, image: productImage, quantity, price });
+            }
+
+            cartCount += quantity;
+            updateCart();
+            updateCartCounter();
+
+            // Otorgar monedas por la compra
+            updateUserCoins(quantity); // Una moneda por cada producto comprado
+
+            // Guardar la compra
+            savePurchase(productName);
+        }
+
+        function updateCart() {
+            const cartContainer = document.getElementById('cart-items');
+            cartContainer.innerHTML = '';
+
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div class="cart-item-details">
+                        <img src="${item.image}" alt="${item.name}" class="cart-item-image">
+                        <div>
+                            <span><strong>${item.name}</strong></span>
+                            <span>${item.description}</span> <!-- Mostrar la descripción -->
+                            <span>Cantidad: ${item.quantity}</span>
+                            <span>Subtotal: $${subtotal.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button class="remove-button" onclick="removeFromCart(${index})">Eliminar</button>
+                `;
+                cartContainer.appendChild(cartItem);
+            });
+
+            document.getElementById('cart-total').textContent = `Total: $${total.toLocaleString()}`;
+        }
+
+        function updateCartCounter() {
+            const cartCounter = document.getElementById('cart-counter');
+            cartCounter.textContent = `Carrito: ${cartCount}`;
+        }
+
+        function removeFromCart(index) {
+            const removedProduct = cart[index];
+            cartCount -= removedProduct.quantity;
+            cart.splice(index, 1);
+            updateCart();
+            updateCartCounter();
+        }
+
+        function sendCartToWhatsApp() {
+            if (cart.length === 0) {
+                alert("El carrito está vacío. Agrega productos antes de enviar el pedido.");
+                return;
+            }
+
+            let message = "¡Hola! Quiero realizar un pedido:\n\n";
+            let total = 0;
+
+            cart.forEach(item => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+                message += `${item.name}\nDescripción: ${item.description}\nCantidad: ${item.quantity}\nSubtotal: $${subtotal.toLocaleString()}\n\n`;
+            });
+
+            message += `Total: $${total.toLocaleString()}\n\n`;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappNumber = "+541164722908";
+            const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+            window.open(whatsappURL, "_blank");
+        }
+
+        // Cargar el carrito desde cart.html
+        async function loadCart() {
+            const response = await fetch('cart.html');
+            const cartHTML = await response.text();
+            document.body.insertAdjacentHTML('beforeend', cartHTML);
+        }
+
+        loadCart();
+
+        function searchProducts() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                if (productName.includes(input)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function showLoginModal() {
+            document.getElementById('login-modal').style.display = 'block';
+            document.getElementById('modal-overlay').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
+
+        function loginWithEmail() {
+            const email = document.getElementById('email-input').value;
+            if (!email) {
+                alert('Por favor, ingresa un email válido.');
+                return;
+            }
+
+            // Guardar el email en localStorage
+            localStorage.setItem('userEmail', email);
+
+            // Recuperar compras anteriores
+            const previousPurchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            alert(`Bienvenido, ${email}. Tus compras anteriores: ${previousPurchases.length > 0 ? previousPurchases.join(', ') : 'No tienes compras registradas.'}`);
+
+            closeLoginModal();
+        }
+
+        function savePurchase(productName) {
+            const email = localStorage.getItem('userEmail');
+            if (!email) {
+                alert('Por favor, inicia sesión para guardar tus compras.');
+                return;
+            }
+
+            // Guardar la compra en localStorage
+            const purchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            purchases.push(productName);
+            localStorage.setItem(`purchases_${email}`, JSON.stringify(purchases));
+
+            alert(`Compra guardada: ${productName}`);
+        }
+
+        function handleCredentialResponse(response) {
+            const data = jwt_decode(response.credential); // Decodificar el token JWT
+            const email = data.email;
+
+            // Guardar el email en localStorage
+            localStorage.setItem('userEmail', email);
+
+            // Mostrar un mensaje de bienvenida
+            alert(`Bienvenido, ${email}.`);
+
+            // Recuperar compras anteriores
+            const previousPurchases = JSON.parse(localStorage.getItem(`purchases_${email}`)) || [];
+            alert(`Tus compras anteriores: ${previousPurchases.length > 0 ? previousPurchases.join(', ') : 'No tienes compras registradas.'}`);
+        }
+
+        function getUserCoins() {
+            return JSON.parse(localStorage.getItem('userCoins')) || 0;
+        }
+
+        function updateUserCoins(amount) {
+            let coins = getUserCoins();
+            coins += amount;
+            localStorage.setItem('userCoins', JSON.stringify(coins));
+            updateCoinDisplay();
+        }
+
+        function updateCoinDisplay() {
+            const coinDisplay = document.getElementById('coin-counter');
+            if (coinDisplay) {
+                coinDisplay.textContent = `Monedas: ${getUserCoins()}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    
+    <div id="cart-counter" class="cart-counter">Carrito: 0</div>
+    <div id="coin-counter" style="position: fixed; top: 10px; left: 10px; background-color: #ffd700; color: black; padding: 10px; border-radius: 5px; font-weight: bold;">
+        Monedas: 0
+    </div>
+    <header>
+    </header>
+    <div class="login-container" style="text-align: right; margin: 10px;">
+        <button id="login-button" onclick="showLoginModal()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            Inicio de sesión
+        </button>
+    </div>
+    <div id="login-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 1000;">
+        <h3>Inicio de sesión</h3>
+        <label for="email-input">Ingresa tu email:</label>
+        <input type="email" id="email-input" placeholder="ejemplo@correo.com" style="width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+        <button onclick="loginWithEmail()" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Iniciar sesión</button>
+        <button onclick="closeLoginModal()" style="background-color: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+    </div>
+    <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999;" onclick="closeLoginModal()"></div>
+    <div id="g_id_onload"
+         data-client_id="TU_CLIENT_ID.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+    <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Buscar producto..." oninput="searchProducts()">
+        <button onclick="searchProducts()">
+            <img src="lupa.png" alt="Buscar" style="width: 20px; height: 20px; vertical-align: middle;"> Buscar
+        </button>
+    </div>
+    <div style="text-align: center; margin: 20px;">
+        <button onclick="window.location.href='batalla-naval.html'" 
+                style="background-color: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">
+            Jugar Batalla Naval
+        </button>
+    </div>
+    <script>
+        function searchProducts() {
+            const input = document.getElementById('search-input').value.toLowerCase();
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                const productName = card.querySelector('h3').textContent.toLowerCase();
+                if (productName.includes(input)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+    <div class="container">
+        <!-- Producto 1 -->
+        <div class="product-card" id="product1">
+            <div class="discount" style="color: rgb(8, 8, 8);">1 moneda</div>
+            <img src="royal canin 23.jpg" alt="Royal Canin Mini Adult">
+            <h3 style="color: rgb(22, 19, 19);">Royal Canin Mini Adulto 7,5kgs</h3>
+            <div class="price" style="color: rgb(12, 11, 11);">
+            <span class="discounted-price">$65,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation1">Presentación:</label>
+            <select id="presentation1" onchange="updatePrice(1)">
+                <option value="30000">3kgs - $29,500</option>
+                <option value="65000">7,5kgs - $68,500</option>
+            </select>
+            </div>
+            <button class="buy-button" style="background-color: rgb(0, 255, 106);">COMPRAR</button>
+            <div class="stock" style="color: rgb(15, 15, 15);">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity1">Cantidad:</label>
+            <input type="number" id="quantity1" name="quantity1" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(1)" style="background-color: rgb(0, 255, 34);">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 4 -->
+        <div class="product-card" id="product4">
+            <div class="discount">10% OFF</div>
+            <img src="maxi adulto.jpg" alt="Royal Canin Maxi Adult">
+            <h3>Royal Canin Maxi Adulto 15kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$95,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation4">Presentación:</label>
+            <select id="presentation4" onchange="updatePrice(4)">
+                <option value="30000">3kgs - $28,000</option>
+                <option value="95000">15kgs - $105,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">50</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity4">Cantidad:</label>
+            <input type="number" id="quantity4" name="quantity4" min="1" max="50" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(4)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 5 -->
+        <div class="product-card" id="product5">
+            <div class="discount">10% OFF</div>
+            <img src="royal medium adulto 15kgs" alt="Producto 5">
+            <h3>Royal Medium Adulto 15kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$100,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation5">Presentación:</label>
+            <select id="presentation5" onchange="updatePrice(5)">
+                <option value="35000">3kgs - $28,000</option>
+                <option value="105500">15kgs - $100,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">40</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity5">Cantidad:</label>
+            <input type="number" id="quantity5" name="quantity5" min="1" max="40" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(5)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 6 -->
+        <div class="product-card" id="product6">
+            <div class="discount">10% OFF</div>
+            <img src="royal fit 32" alt="Producto 6">
+            <h3>Royal Canin Fit 32</h3>
+            <div class="price">
+            <span class="original-price">15kgs</span>/
+            <span class="discounted-price">$165,500</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation6">Presentación:</label>
+            <select id="presentation6" onchange="updatePrice(6)">
+                <option value="15000">1,5kgs - $26,500</option>
+                <option value="270000">7,5kgs - $91,500</option>
+                <option value="500000">15kgs - $165,500</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity6">Cantidad:</label>
+            <input type="number" id="quantity6" name="quantity6" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(6)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 21 -->
+        <div class="product-card" id="product21">
+            <div class="discount">10% OFF</div>
+            <img src="royal gato castrado 12kgs.jpeg" alt="Producto 21">
+            <h3>Royal Weight Control</h3>
+            <div class="price">
+            <span class="discounted-price">12kgs</span>/
+            <span class="original-price">$133,200</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation21">Presentación:</label>
+            <select id="presentation21" onchange="updatePrice(21)">
+                <option value="15000">1,5kgs - $26,200</option>
+                <option value="30000">3kgs - $49,200</option>
+                <option value="75000">7,5kgs - $97,200</option>
+                <option value="133650">12kgs - $133,200</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity21">Cantidad:</label>
+            <input type="number" id="quantity21" name="quantity21" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(21)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 22 -->
+        <div class="product-card" id="product22">
+            <div class="discount">10% OFF</div>
+            <img src="royal canin kitten" alt="Producto 22">
+            <h3>Royal Canin Kitten</h3>
+            <div class="price">
+            <span class="original-price">7,5kgs</span>
+            <span class="discounted-price">$94,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation22">Presentación:</label>
+            <select id="presentation22" onchange="updatePrice(22)">
+                <option value="15000">400gs - $8900</option>
+                <option value="45000">1,5kgs - $28,000</option>
+                <option value="120000">7,5kgs - $94,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity22">Cantidad:</label>
+            <input type="number" id="quantity22" name="quantity22" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(22)">Agregar al carrito</button>
+        </div>
+        <!-- Producto 7 -->
+        <div class="product-card" id="product7">
+            <div class="discount">5% OFF</div>
+            <img src="royal canin urinary so.jpeg" alt="royal canin urinary so">
+            <h3>Royal Canin Urinary S/O</h3>
+            <div class="price">
+            <span class="original-price">7,5kgs</span>
+            <span class="discounted-price">$100,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation7">Presentación:</label>
+            <select id="presentation7" onchange="updatePrice(7)">
+                <option value="30000">1,5kgs - $29,000</option>
+                <option value="100000">7,5kgs - $100,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity7">Cantidad:</label>
+            <input type="number" id="quantity7" name="quantity7" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(7)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 8 -->
+        <div class="product-card" id="product8">
+            <div class="discount">5% OFF</div>
+            <img src="royal mini puppy.jpeg" alt="Royal Canin Mini Puppy">
+            <h3>Royal Canin Mini Puppy</h3>
+            <div class="price">
+            <span class="original-price">7,5kgs</span>
+            <span class="discounted-price">$64,900</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation8">Presentación:</label>
+            <select id="presentation8" onchange="updatePrice(8)">
+                <option value="31500">3kgs - $31,500</option>
+                <option value="64900">7,5kgs - $64,900</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity8">Cantidad:</label>
+            <input type="number" id="quantity8" name="quantity8" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(8)">Agregar al carrito</button>
+        </div>
+        
+        <div class="product-card" id="product8">
+            <div class="discount">10% OFF</div>
+            <img src="royal mini puppy.jpeg" alt="Producto 8">
+            <h3>Royal Canin Mini Puppy</h3>
+            <div class="price">
+                <option value="250000">7,5kgs - $64,900</option>
+            </div>
+            <div class="presentation">
+            <label for="presentation8">Presentación:</label>
+            <select id="presentation8" onchange="updatePrice(8)">
+            <option value="250000">3kgs - $31,500</option>
+            <option value="450000">7,5kgs - $64,900</option>
+            <option value="600000">15kgs - $115,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity8">Cantidad:</label>
+            <input type="number" id="quantity8" name="quantity8" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(8)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 10 -->
+        <div class="product-card" id="product10">
+            <div class="discount">10% OFF</div>
+            <img src="royal indor 7.5k.jfif" alt="Producto 10">
+            <h3>Royal Canin Indor 7,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$95,600</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation8">Presentación:</label>
+                <select id="presentation8" onchange="updatePrice(8)">
+                <option value="250000">1,5kgs - $24,500</option>
+                <option value="450000">7,5kgs - $95,600</option>
+                </select>
+                </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">4</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity10">Cantidad:</label>
+            <input type="number" id="quantity10" name="quantity10" min="1" max="40" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(10)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 11 -->
+        <div class="product-card" id="product11">
+            <div class="discount">5% OFF</div>
+            <img src="royal active +7 1.5kgs.jfif" alt="Producto 11">
+            <h3>Royal Canin Active +7 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$24,600</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity11">Cantidad:</label>
+            <input type="number" id="quantity11" name="quantity11" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(11)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 12 -->
+        <div class="product-card" id="product12">
+            <div class="discount">10% OFF</div>
+            <img src="royal canin Ageing 12+ 2kgs.jfif" alt="Producto 12">
+            <h3>Royal Canin Ageing +12 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$34,000</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">5</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity12">Cantidad:</label>
+            <input type="number" id="quantity12" name="quantity12" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(12)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 13 -->
+        <div class="product-card" id="product13">
+            <div class="discount">10% OFF</div>
+            <img src="bulldog franced 7,5kgs.jfif" alt="Producto 13">
+            <h3>Royal Canin Bulldog Francés Adult 7,5kgs</h3>
+            <div class="price">
+            <span class="original-price">$73,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation13">Presentación:</label>
+            <select id="presentation13" onchange="updatePrice(13)">
+                <option value="700000">3kgs - $34,000</option>
+                <option value="1300000">7,5kgs - $73,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity13">Cantidad:</label>
+            <input type="number" id="quantity13" name="quantity13" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(13)">Agregar al carrito</button>
+        </div>
+        <div class="product-card" id="product13">
+            <div class="discount">10% OFF</div>
+            <img src="royal calm gato.jpeg" alt="Producto 13">
+            <h3>Royal Canin Calm 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$41,000</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity13">Cantidad:</label>
+            <input type="number" id="quantity13" name="quantity13" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(13)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 14 -->
+        <div class="product-card" id="product14">
+            <div class="discount">10% OFF</div>
+            <img src="royal cardiac 2kgs.jpeg" alt="Producto 14">
+            <h3>Royal Canin Cardiac "kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$31,000</span>
+            <div class="presentation">
+                <label for="presentation14">Presentación:</label>
+                <select id="presentation14" onchange="updatePrice(14)">
+                    <option value="31000">2kgs - $31,000</option>
+                    <option value="150000">10kgs - $115,000</option>
+                </select>
+            </div>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity14">Cantidad:</label>
+            <input type="number" id="quantity14" name="quantity14" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(14)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 15 -->
+        <div class="product-card" id="product15">
+            <div class="discount">10% OFF</div>
+            <img src="royal canin dachshund 28.jpeg" alt="Producto 15">
+            <h3>Royal Canin Dachshund Adult 3kgs</h3>
+            <div class="price">
+            <span class="original-price">$36,500</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity15">Cantidad:</label>
+            <input type="number" id="quantity15" name="quantity15" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(15)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 16 -->
+        <div class="product-card" id="product16">
+            <div class="discount">10% OFF</div>
+            <img src="royal diabetic 2kgs.jpeg" alt="Producto 16">
+            <h3>Royal Canin gato Diabetic Feline 1,5kgs</h3>
+            <div class="price">
+            <span class="original-price">$32,500</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity16">Cantidad:</label>
+            <input type="number" id="quantity16" name="quantity16" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(16)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 17 -->
+        <div class="product-card" id="product17">
+            <div class="discount">5% OFF</div>
+            <img src="royal canin exigent.jpeg" alt="Producto 17">
+            <h3>Royal Canin Exigent 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$26,000</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity17">Cantidad:</label>
+            <input type="number" id="quantity17" name="quantity17" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(17)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 18 -->
+        <div class="product-card" id="product18">
+            <div class="discount">25% OFF</div>
+            <img src="royal canin gastrointestinal gato 2k.jpeg" alt="Producto 18">
+            <h3>Royal Canin Gastrointestinal 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$38,000</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity18">Cantidad:</label>
+            <input type="number" id="quantity18" name="quantity18" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(18)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 19 -->
+        <div class="product-card" id="product19">
+            <div class="discount">10% OFF</div>
+            <img src="royal canin sensible 21kgs.jpeg" alt="Producto 19">
+            <h3>Royal Canin Sensible gato 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$25,000</span>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity19">Cantidad:</label>
+            <input type="number" id="quantity19" name="quantity19" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(19)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 20 -->
+        <div class="product-card" id="product20">
+            <div class="discount">15% OFF</div>
+            <img src="Royal Canin Hypoallergenic Canine seco.jpeg" alt="Producto 20">
+            <h3>royal Hypoallergenic canine 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$27,800</span>
+            <div class="presentation">
+                <label for="presentation20">Presentación:</label>
+                <select id="presentation20" onchange="updatePrice(20)">
+                    <option value="27800">2kgs - $27,800</option>
+                    <option value="135000">10kgs - $105,000</option>
+                </select>
+            </div>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity20">Cantidad:</label>
+            <input type="number" id="quantity20" name="quantity20" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(20)">Agregar al carrito</button>
+        </div>
+        <div class="product-card" id="product23">
+            <div class="discount">10% OFF</div>
+            <img src="royal indor +7.jpeg" alt="Producto 23">
+            <h3>Royal Indoor +7 7,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$99,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation23">Presentación:</label>
+                <select id="presentation23" onchange="updatePrice(23)">
+                    <option value="45000">1,5kgs - $26,000</option>
+                    <option value="120000">7,5kgs - $99,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity23">Cantidad:</label>
+                <input type="number" id="quantity23" name="quantity23" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(23)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 24 -->
+        <div class="product-card" id="product24">
+            <div class="discount">15% OFF</div>
+            <img src="royal mini +8 3kgs.jpeg" alt="Producto 24">
+            <h3>Royal Mini 12+ años 3kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$33,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation24">Presentación:</label>
+                <select id="presentation24" onchange="updatePrice(24)">
+                    <option value="40000">3kgs - $33,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity24">Cantidad:</label>
+                <input type="number" id="quantity24" name="quantity24" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(24)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 25 -->
+        <div class="product-card" id="product25">
+            <div class="discount">2% OFF</div>
+            <img src="royal mini +8 3ks.jpeg" alt="Producto 25">
+            <h3>Royal Canin Ageing 8+ 3kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$33,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation25">Presentación:</label>
+                <select id="presentation25" onchange="updatePrice(25)">
+                    <option value="30000">3kgs - $33,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity25">Cantidad:</label>
+                <input type="number" id="quantity25" name="quantity25" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(25)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 26 -->
+        <div class="product-card" id="product26">
+            <div class="discount">10% OFF</div>
+            <img src="royal indoor perro.jpeg" alt="Producto 26">
+            <h3>Royal Canin Mini Indoor Adulto 3kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$30,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation26">Presentación:</label>
+                <select id="presentation26" onchange="updatePrice(26)">
+                    <option value="50000">3kgs - $30,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">8</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity26">Cantidad:</label>
+                <input type="number" id="quantity26" name="quantity26" min="1" max="8" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(26)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 27 -->
+        <div class="product-card" id="product27">
+            <div class="discount">5% OFF</div>
+            <img src="royal mini weight 3kgs.jpeg" alt="Producto 27">
+            <h3>Royal Mini Weight Care 3kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$33,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation27">Presentación:</label>
+                <select id="presentation27" onchange="updatePrice(27)">
+                    <option value="35000">3kgs - $33,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">12</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity27">Cantidad:</label>
+                <input type="number" id="quantity27" name="quantity27" min="1" max="12" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(27)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 28 -->
+        <div class="product-card" id="product28">
+            <div class="discount">10% OFF</div>
+            <img src="royal weight gato.jpeg" alt="Producto 28">
+            <h3>Royal Canin gato Weight Car 7,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$92,500</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation28">Presentación:</label>
+                <select id="presentation28" onchange="updatePrice(28)">
+                    <option value="45000">1,5kgs - $26,000</option>
+                    <option value="125000">7,5kgs - $92,500</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity28">Cantidad:</label>
+                <input type="number" id="quantity28" name="quantity28" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(28)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 29 -->
+        <div class="product-card" id="product29">
+            <div class="discount">15% OFF</div>
+            <img src="royal renal gato 2kgs.jpeg" alt="Producto 29">
+            <h3>Royal Canin gato Renal Feline 2kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$33,500</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation29">Presentación:</label>
+                <select id="presentation29" onchange="updatePrice(29)">
+                    <option value="50000">3kgs - $33,500</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">7</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity29">Cantidad:</label>
+                <input type="number" id="quantity29" name="quantity29" min="1" max="7" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(29)">Agregar al carrito</button>
+        </div>
+    
+        <!-- Producto 30 -->
+        <div class="product-card" id="product30">
+            <div class="discount">10% OFF</div>
+            <img src="royal urinary care" alt="Producto 30">
+            <h3>Royal Canin Urinary 7,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$108,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation30">Presentación:</label>
+                <select id="presentation30" onchange="updatePrice(30)">
+                    <option value="30000">1,5kgs - $27,000</option>
+                    <option value="95000">7,5kgs - $108,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity30">Cantidad:</label>
+                <input type="number" id="quantity30" name="quantity30" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(30)">Agregar al carrito</button>
+        </div>
+        <!-- Producto 31 -->
+        <div class="product-card" id="product31">
+            <div class="discount">10% OFF</div>
+            <img src="royal satiety perro.jpeg" alt="Producto 31">
+            <h3>Royal Canin perro Satiety Support Weight 7,5kgs </h3>
+            <div class="price">
+            <span class="discounted-price">$75,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation31">Presentación:</label>
+            <select id="presentation31" onchange="updatePrice(31)">
+                <option value="25000">1,5kgs - $19,000</option>
+                <option value="50000">3kgs - $75,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity31">Cantidad:</label>
+            <input type="number" id="quantity31" name="quantity31" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(31)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 32 -->
+        <div class="product-card" id="product32">
+            <div class="discount">15% OFF</div>
+            <img src="royal satiety gato.jpeg" alt="Producto 32">
+            <h3>Royal Satiety gato 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$25,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation32">Presentación:</label>
+            <select id="presentation32" onchange="updatePrice(32)">
+                <option value="30000">1,5kgs - $25,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity32">Cantidad:</label>
+            <input type="number" id="quantity32" name="quantity32" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(32)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 33 -->
+        <div class="product-card" id="product33">
+            <div class="discount">5% OFF</div>
+            <img src="royal renal perro.jpeg" alt="Producto 33">
+            <h3>Royal Canin Renal Perro 10kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$95,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation33">Presentación:</label>
+            <select id="presentation33" onchange="updatePrice(33)">
+                <option value="35000">1,5kgs - $19,000</option>
+                <option value="70000">4kgs - $95,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity33">Cantidad:</label>
+            <input type="number" id="quantity33" name="quantity33" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(33)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 34 -->
+        <div class="product-card" id="product34">
+            <div class="discount">20% OFF</div>
+            <img src="royal gastrointestinal.jpeg" alt="Producto 34">
+            <h3>Royal Gastrointestinal perro 10kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$98,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation34">Presentación:</label>
+            <select id="presentation34" onchange="updatePrice(34)">
+                <option value="40000">2kgs - $24,000</option>
+                <option value="80000">10kgs - $98,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity34">Cantidad:</label>
+            <input type="number" id="quantity34" name="quantity34" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(34)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 35 -->
+        <div class="product-card" id="product35">
+            <div class="discount">10% OFF</div>
+            <img src="royal weight medium.jpeg" alt="Producto 35">
+            <h3>Royal Weight Medium 10kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$81,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation35">Presentación:</label>
+            <select id="presentation35" onchange="updatePrice(35)">
+                <option value="45000">10kgs - $81,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity35">Cantidad:</label>
+            <input type="number" id="quantity35" name="quantity35" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(35)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 36 -->
+        <div class="product-card" id="product36">
+            <div class="discount">15% OFF</div>
+            <img src="royal medium +7.jpeg" alt="Producto 36">
+            <h3>Royal Medium +7 años 15kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$118,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation36">Presentación:</label>
+            <select id="presentation36" onchange="updatePrice(36)">
+                <option value="50000">15kgs - $118,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity36">Cantidad:</label>
+            <input type="number" id="quantity36" name="quantity36" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(36)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 37 -->
+        <div class="product-card" id="product37">
+            <div class="discount">10% OFF</div>
+            <img src="royal hepatic gato.jpeg" alt="Producto 37">
+            <h3>Royal Hepatic Gato 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$31,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation37">Presentación:</label>
+            <select id="presentation37" onchange="updatePrice(37)">
+                <option value="55000">1,5kgs - $31,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity37">Cantidad:</label>
+            <input type="number" id="quantity37" name="quantity37" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(37)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 38 -->
+        <div class="product-card" id="product38">
+            <div class="discount">5% OFF</div>
+            <img src="royal hypo.jpeg" alt="Producto 38">
+            <h3>Royal Canin Hypoallergenic small 2kgs </h3>
+            <div class="price">
+            <span class="discounted-price">$32,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation38">Presentación:</label>
+            <select id="presentation38" onchange="updatePrice(38)">
+                <option value="60000">2kgs - $32,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity38">Cantidad:</label>
+            <input type="number" id="quantity38" name="quantity38" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(38)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 39 -->
+        <div class="product-card" id="product39">
+            <div class="discount">10% OFF</div>
+            <img src="royal hypo gato.jpeg" alt="Producto 39">
+            <h3>royal Hypoallergenic gato 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$42,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation39">Presentación:</label>
+            <select id="presentation39" onchange="updatePrice(39)">
+                <option value="65000">2kgs - $42,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity39">Cantidad:</label>
+            <input type="number" id="quantity39" name="quantity39" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(39)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 40 -->
+        <div class="product-card" id="product40">
+            <div class="discount">15% OFF</div>
+            <img src="royal persian.jpeg" alt="Producto 40">
+            <h3>Royal Canin Persian Gato 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$32,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation40">Presentación:</label>
+            <select id="presentation40" onchange="updatePrice(40)">
+                <option value="70000">2kgs - $32,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity40">Cantidad:</label>
+            <input type="number" id="quantity40" name="quantity40" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(40)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 41 -->
+        <div class="product-card" id="product41">
+            <div class="discount">10% OFF</div>
+            <img src="royal active +7 1.5kgs.jfif" alt="Producto 41">
+            <h3>Royal Active +7 1,5kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$25,500</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation41">Presentación:</label>
+            <select id="presentation41" onchange="updatePrice(41)">
+                <option value="75000">2kgs - $25,500</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity41">Cantidad:</label>
+            <input type="number" id="quantity41" name="quantity41" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(41)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 42 -->
+        <div class="product-card" id="product42">
+            <div class="discount">20% OFF</div>
+            <img src="Royal Canin Mini Starter Mother & Babydog.jpeg" alt="Producto 42">
+            <h3>Royal Canin mini Starter 3kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$36,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation42">Presentación:</label>
+            <select id="presentation42" onchange="updatePrice(42)">
+                <option value="80000">3kgs - $36,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity42">Cantidad:</label>
+            <input type="number" id="quantity42" name="quantity42" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(42)">Agregar al carrito</button>
+        </div>
+        <!-- Producto 43 -->
+        <div class="product-card" id="product43">
+            <div class="discount">10% OFF</div>
+            <img src="royal medium puppy 15kgs.jpeg" alt="Producto 43">
+            <h3>Royal Canin Medium puppy 15kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$106,900</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation43">Presentación:</label>
+                <select id="presentation43" onchange="updatePrice(43)">
+                    <option value="50000">3kgs - $31,200</option>
+                    <option value="106900">15kgs - $106,900</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity43">Cantidad:</label>
+                <input type="number" id="quantity43" name="quantity43" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(43)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 44 -->
+        <div class="product-card" id="product44">
+            <div class="discount">15% OFF</div>
+            <img src="royal maxi puppy 15kgs.jpeg" alt="Producto 44">
+            <h3>Royal Canin Maxi puppy 15kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$112,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation44">Presentación:</label>
+                <select id="presentation44" onchange="updatePrice(44)">
+                    <option value="60000">3kgs - $32,000</option>
+                    <option value="112000">15kgs - $112,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity44">Cantidad:</label>
+                <input type="number" id="quantity44" name="quantity44" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(44)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 45 -->
+        <div class="product-card" id="product45">
+            <div class="discount">20% OFF</div>
+            <img src="royal canin gastrointestinal fibre response 2kgs.jpeg" alt="Producto 45">
+            <h3>Royal Canin gastrointestinal fibre response 2kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$38,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation45">Presentación:</label>
+                <select id="presentation45" onchange="updatePrice(45)">
+                    <option value="70000">2kgs - $38,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity45">Cantidad:</label>
+                <input type="number" id="quantity45" name="quantity45" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(45)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 46 -->
+        <div class="product-card" id="product46">
+            <div class="discount">5% OFF</div>
+            <img src="royal canin poodle 3kgs.jpeg" alt="Producto 46">
+            <h3>Royal Canin Poodle adulto 3kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$37,800</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation46">Presentación:</label>
+                <select id="presentation46" onchange="updatePrice(46)">
+                    <option value="80000">3kgs - $37,800</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">25</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity46">Cantidad:</label>
+                <input type="number" id="quantity46" name="quantity46" min="1" max="25" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(46)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 47 -->
+        <div class="product-card" id="product47">
+            <div class="discount">10% OFF</div>
+            <img src="royal baby cat 1,5kgs.jpeg" alt="Producto 47">
+            <h3>Royal Canin Baby cat 1,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$28,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation47">Presentación:</label>
+                <select id="presentation47" onchange="updatePrice(47)">
+                    <option value="30000">400gs - $7,500</option>
+                    <option value="90000">1,5kgs - $28,000</option>
+
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">30</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity47">Cantidad:</label>
+                <input type="number" id="quantity47" name="quantity47" min="1" max="30" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(47)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 48 -->
+        <div class="product-card" id="product48">
+            <div class="discount">15% OFF</div>
+            <img src="royal indor pelo largo.jpeg" alt="Producto 48">
+            <h3>Royal Canin gato Indoor Long Hair 1,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$24,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation48">Presentación:</label>
+                <select id="presentation48" onchange="updatePrice(48)">
+                    <option value="100000">1,5kgs - $24,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity48">Cantidad:</label>
+                <input type="number" id="quantity48" name="quantity48" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(48)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 49 -->
+        <div class="product-card" id="product49">
+            <div class="discount">10% OFF</div>
+            <img src="royal diabetic perro.jpeg" alt="Producto 49">
+            <h3>Royal Canin Diabetic Perro 10kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$110,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation49">Presentación:</label>
+                <select id="presentation49" onchange="updatePrice(49)">
+                    <option value="110000">10kgs - $110,000</option>
+                    <option value="50000">2kgs - $27,800</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity49">Cantidad:</label>
+                <input type="number" id="quantity49" name="quantity49" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(49)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 50 -->
+        <div class="product-card" id="product50">
+            <div class="discount">5% OFF</div>
+            <img src="royal urinary so perro 10kgs.jpeg" alt="Producto 50">
+            <h3>Royal Canin Urinary s/o perro 10kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$105,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation50">Presentación:</label>
+                <select id="presentation50" onchange="updatePrice(50)">
+                    <option value="120000">1,5kgs - $21,000</option>
+                    <option value="50000">10kgs - $105,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity50">Cantidad:</label>
+                <input type="number" id="quantity50" name="quantity50" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(50)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 51 -->
+        <div class="product-card" id="product51">
+            <div class="discount">10% OFF</div>
+            <img src="royal renal early 1,5kgs.jpeg" alt="Producto 51">
+            <h3>Royal Early renal 1,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$28,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation51">Presentación:</label>
+                <select id="presentation51" onchange="updatePrice(51)">
+                    <option value="130000">3kgs - $54,000</option>
+                    <option value="50000">1,5kgs - $28,000</option>
+
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity51">Cantidad:</label>
+                <input type="number" id="quantity51" name="quantity51" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(51)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 52 -->
+        <div class="product-card" id="product52">
+            <div class="discount">15% OFF</div>
+            <img src="royal canin mature consult 1,5kgs.jpeg" alt="Producto 52">
+            <h3>Royal Canin Mature consult 1,5kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$27,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation52">Presentación:</label>
+                <select id="presentation52" onchange="updatePrice(52)">
+                    <option value="140000">3,5kgs - $63,000</option>
+                    <option value="27000">1,5kgs - $27,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity52">Cantidad:</label>
+                <input type="number" id="quantity52" name="quantity52" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(52)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 53 -->
+        <div class="product-card" id="product53">
+            <div class="discount">10% OFF</div>
+            <img src="royal canin hepatic perro 10kgs.jpeg" alt="Producto 53">
+            <h3>Royal Canin Hepatic perro 10kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$105,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation53">Presentación:</label>
+                <select id="presentation53" onchange="updatePrice(53)">
+                    <option value="150000">15kgs - $22,000</option>
+                    <option value="105000">10kgs - $105,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity53">Cantidad:</label>
+                <input type="number" id="quantity53" name="quantity53" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(53)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 54 -->
+        <div class="product-card" id="product54">
+            <div class="discount">5% OFF</div>
+            <img src="royal canin medium +10 años 15kgs.jpeg" alt="Producto 54">
+            <h3>Royal Canin perro Medium Aging 10+ 15kgs</h3>
+            <div class="price">
+                <span class="discounted-price">$120,000</span>
+            </div>
+            <div class="presentation">
+                <label for="presentation54">Presentación:</label>
+                <select id="presentation54" onchange="updatePrice(54)">
+                    <option value="160000">15kgs - $120,000</option>
+                </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+                <span>Stock disponible: </span>
+                <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+                <label for="quantity54">Cantidad:</label>
+                <input type="number" id="quantity54" name="quantity54" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(54)">Agregar al carrito</button>
+        </div>
+        <!-- Producto 55 -->
+        <div class="product-card" id="product55">
+            <div class="discount">10% OFF</div>
+            <img src="mobility perro.webp" alt="Producto 55">
+            <h3>Royal Canin Mobility 10kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$115,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation55">Presentación:</label>
+            <select id="presentation55" onchange="updatePrice(55)">
+                <option value="115000">15kgs - $115,000</option>
+                <option value="50000">1,5kgs - $31,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">10</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity55">Cantidad:</label>
+            <input type="number" id="quantity55" name="quantity55" min="1" max="10" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(55)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 56 -->
+        <div class="product-card" id="product56">
+            <div class="discount">15% OFF</div>
+            <img src="royal canin calm perro 2kgs.jpeg" alt="Producto 56">
+            <h3>Royal Canin Calm perro 2kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$32,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation56">Presentación:</label>
+            <select id="presentation56" onchange="updatePrice(56)">
+                <option value="38000">2kgs - $32,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity56">Cantidad:</label>
+            <input type="number" id="quantity56" name="quantity56" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(56)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 57 -->
+        <div class="product-card" id="product57">
+            <div class="discount">20% OFF</div>
+            <img src="royal canin giant 15kgs.jpeg" alt="Producto 57">
+            <h3>royal canin giant 15kgs</h3>
+            <div class="price">
+            <span class="discounted-price">$105,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation57">Presentación:</label>
+            <select id="presentation57" onchange="updatePrice(57)">
+                <option value="30000">15kgs - $105,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">20</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity57">Cantidad:</label>
+            <input type="number" id="quantity57" name="quantity57" min="1" max="20" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(57)">Agregar al carrito</button>
+        </div>
+
+        <!-- Producto 58 -->
+        <div class="product-card" id="product58">
+            <div class="discount">10% OFF</div>
+            <img src="royal recovery lata" alt="Producto 58">
+            <h3>Royal Canin recovery lata X 3 unidades</h3>
+            <div class="price">
+            <span class="discounted-price">$20,000</span>
+            </div>
+            <div class="presentation">
+            <label for="presentation58">Presentación:</label>
+            <select id="presentation58" onchange="updatePrice(58)">
+                <option value="40000">3uni - $20,000</option>
+            </select>
+            </div>
+            <button class="buy-button">COMPRAR</button>
+            <div class="stock">
+            <span>Stock disponible: </span>
+            <span class="stock-count">15</span>
+            </div>
+            <div class="quantity">
+            <label for="quantity58">Cantidad:</label>
+            <input type="number" id="quantity58" name="quantity58" min="1" max="15" value="1">
+            </div>
+            <button class="add-to-cart-button" onclick="addToCart(58)">Agregar al carrito</button>
+        </div>
+        <!-- Producto 59 -->
+        
+
+        <!-- Producto 6 -->
+        
+    </div>
+    <div class="cart">
+        <h2>Carrito</h2>
+        <script>
+            // Hacer que el carrito sea movible con el mouse
+            const cartElement = document.querySelector('.cart');
+            let isDragging = false;
+            let offsetX, offsetY;
+
+            cartElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - cartElement.offsetLeft;
+            offsetY = e.clientY - cartElement.offsetTop;
+            cartElement.style.cursor = 'move';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                cartElement.style.left = `${e.clientX - offsetX}px`;
+                cartElement.style.top = `${e.clientY - offsetY}px`;
+                cartElement.style.position = 'absolute';
+            }
+            });
+
+            document.addEventListener('mouseup', () => {
+            isDragging = false;
+            cartElement.style.cursor = 'default';
+            });
+        </script>
+        <div id="cart-items" style="max-height: 300px; overflow-y: auto;"></div>
+        <div id="cart-items"></div>
+        <div class="cart-total" id="cart-total">Total: $0</div>
+        <button class="buy-button" onclick="sendCartToWhatsApp()">Enviar pedido por WhatsApp</button>
+    </div>
+
+    <!-- Botón para jugar Batalla Naval -->
+    <div style="text-align: center; margin: 20px;">
+        <button onclick="window.location.href='batalla-naval.html'" 
+                style="background-color: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">
+            Jugar Batalla Naval
+        </button>
+    </div>
+</body>
+</html>
